@@ -1,4 +1,5 @@
 import arcade
+import images
 
 SPRITE_SCALING = 0.5
 
@@ -95,10 +96,11 @@ class MyGame(arcade.Window):
 
 class Player(arcade.Sprite):
     def __init__(self):
-        img = ":resources:images/animated_characters/female_person/femalePerson_idle.png"
+        img = "images\Knight.png"
         super().__init__(img, SPRITE_SCALING)
         self.center_x = 2 * GRID_PIXEL_SIZE
         self.center_y = 3 * GRID_PIXEL_SIZE
+        self.scale: float = .1
 
     def move(self, x_vel = None, y_vel = None):
         if x_vel is not None:
