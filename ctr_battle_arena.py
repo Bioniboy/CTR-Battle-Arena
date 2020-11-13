@@ -96,11 +96,16 @@ class MyGame(arcade.Window):
 
 class Player(arcade.Sprite):
     def __init__(self):
-        img = "images\Knight.png"
-        super().__init__(img, SPRITE_SCALING)
+        super().__init__()
+        texture = arcade.load_texture("images/knight-sword.png")
+        self.textures.append(texture)
+        texture = arcade.load_texture("images/knight-sword.png",
+                                      flipped_horizontally=True)
+        self.textures.append(texture)
+        self.texture = self.textures[0]
+        self.scale = SPRITE_SCALING/5
         self.center_x = 2 * GRID_PIXEL_SIZE
         self.center_y = 3 * GRID_PIXEL_SIZE
-        self.scale: float = .1
 
     def move(self, x_vel = None, y_vel = None):
         if x_vel is not None:
@@ -116,8 +121,11 @@ class Player(arcade.Sprite):
             self.move(y_vel=JUMP_SPEED)
         elif key in [arcade.key.LEFT, arcade.key.A] and self.left > LEFT_LIMIT:
             self.move(x_vel=-MOVEMENT_SPEED)
+            self.texture = self.textures[1]
         elif key in [arcade.key.RIGHT, arcade.key.D] and self.right < RIGHT_LIMIT:
             self.move(x_vel=MOVEMENT_SPEED)
+            self.texture = self.textures[0]
+
 
     def on_key_release(self, key):
         if (key in [arcade.key.LEFT, arcade.key.A] and self.change_x < 0
