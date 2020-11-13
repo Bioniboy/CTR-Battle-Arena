@@ -89,12 +89,27 @@ class MyGame(arcade.Window):
         # Put the text on the screen.
         # Adjust the text position based on the viewport so that we don't
         # scroll the text too.
-        distance = self.player_sprite.right
-        output = f"Distance: {distance}"
+        health = self.player_sprite.health
+        output = f"Health: {health}"
         arcade.draw_text(output, self.view_left + 10, self.view_bottom + 20,
                          arcade.color.WHITE, 14)
 
-class Player(arcade.Sprite):
+class Actor(arcade.Sprite):
+    def __init__(self):
+        super().__init__()
+        self.health = None
+    
+    def move(self, x_vel = None, y_vel = None):
+        if x_vel is not None:
+            self.change_x = x_vel
+        if y_vel is not None:
+            self.change_y = y_vel
+    
+    def is_alive(self):
+        return self.health > 0
+
+
+class Player(Actor):
     def __init__(self):
         super().__init__()
         texture = arcade.load_texture("images/knight-sword.png")
@@ -104,14 +119,8 @@ class Player(arcade.Sprite):
         self.textures.append(texture)
         self.texture = self.textures[0]
         self.scale = SPRITE_SCALING/5
-        self.center_x = 2 * GRID_PIXEL_SIZE
-        self.center_y = 3 * GRID_PIXEL_SIZE
-
-    def move(self, x_vel = None, y_vel = None):
-        if x_vel is not None:
-            self.change_x = x_vel
-        if y_vel is not None:
-            self.change_y = y_vel
+        self.position = [(RIGHT_LIMIT + LEFT_LIMIT)/2, 4 * GRID_PIXEL_SIZE]
+        self.health = 100
 
     def is_dead(self):
         return self.center_y < -5 * GRID_PIXEL_SIZE
@@ -139,8 +148,7 @@ class Wall(arcade.Sprite):
     def __init__(self, x_pos, y_pos):
         img = ":resources:images/tiles/grassMid.png"
         super().__init__(img, SPRITE_SCALING)
-        self.center_x = x_pos * GRID_PIXEL_SIZE
-        self.center_y = y_pos * GRID_PIXEL_SIZE
+        self.position = [x_pos * GRID_PIXEL_SIZE, y_pos * GRID_PIXEL_SIZE]
 
 def main():
     """ Main method """
