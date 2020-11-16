@@ -20,43 +20,28 @@ class MyGame(arcade.Window):
     """ Main application class. """
 
     def __init__(self, width, height, title):
-        """
-        Initializer
-        """
-
         super().__init__(width, height, title)
 
         # Sprite lists
         self.wall_list = arcade.SpriteList()
-        self.player_list = arcade.SpriteList()
+        self.actor_list = arcade.SpriteList()
+
+        self.physics_engine = {}
 
         # Set up the player
-        self.player_sprite = Player()
-        self.player_list.append(self.player_sprite)
-        self.physics_engine = None
-        self.view_left = 0
-        self.view_bottom = 0
-        self.end_of_map = 0
+        self.player_sprite = Player(self.actor_list, self.wall_list, self.physics_engine)
         self.game_over = False
 
     def setup(self):
-
-        # Create floor
         for i in range(18):
-            self.wall_list.append(Wall(i, 0.5))
-        self.physics_engine = \
-            arcade.PhysicsEnginePlatformer(self.player_sprite,
-                                           self.wall_list,
-                                           gravity_constant=GRAVITY)
+            Wall(self.wall_list, i, 0.5)      
 
-        # Set the background color
         arcade.set_background_color(arcade.color.SKY_BLUE)
 
     def on_update(self, delta_time):
-        """ Movement and game logic """
-
         # Call update on all sprites
-        self.physics_engine.update()
+        for engine in self.physics_engine.values():
+            engine.update()
 
         # If the player falls off the platform, game over
         if self.player_sprite.is_dead():
@@ -64,12 +49,13 @@ class MyGame(arcade.Window):
         if self.game_over:
             arcade.close_window()
 
+        # Stop the player from leaving the screen
         if (self.player_sprite.left <= LEFT_LIMIT and self.player_sprite.change_x < 0
                 or self.player_sprite.right >= RIGHT_LIMIT and self.player_sprite.change_x > 0):
             self.player_sprite.change_x = 0
 
     def on_key_press(self, key, modifiers):
-        self.player_sprite.on_key_press(key, self.physics_engine.can_jump())
+        self.player_sprite.on_key_press(key, self.physics_engine[self.player_sprite].can_jump())
 
     def on_key_release(self, key, modifiers):
         self.player_sprite.on_key_release(key)
@@ -84,20 +70,22 @@ class MyGame(arcade.Window):
 
         # Draw the sprites.
         self.wall_list.draw()
-        self.player_list.draw()
+        self.actor_list.draw()
 
         # Put the text on the screen.
         # Adjust the text position based on the viewport so that we don't
         # scroll the text too.
         health = self.player_sprite.health
         output = f"Health: {health}"
-        arcade.draw_text(output, self.view_left + 10, self.view_bottom + 20,
+        arcade.draw_text(output, 10, 20,
                          arcade.color.WHITE, 14)
 
 class Actor(arcade.Sprite):
-    def __init__(self):
+    def __init__(self, actor_list, wall_list, physics_engine):
         super().__init__()
         self.health = None
+        actor_list.append(self)
+        physics_engine[self] = arcade.PhysicsEnginePlatformer(self, wall_list, gravity_constant=GRAVITY)
     
     def move(self, x_vel = None, y_vel = None):
         if x_vel is not None:
@@ -110,8 +98,8 @@ class Actor(arcade.Sprite):
 
 
 class Player(Actor):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, actor_list, wall_list, physics_engine):
+        super().__init__(actor_list, wall_list, physics_engine)
         texture = arcade.load_texture("images/knight-sword.png")
         self.textures.append(texture)
         texture = arcade.load_texture("images/knight-sword.png",
@@ -145,10 +133,11 @@ class Player(Actor):
 
 
 class Wall(arcade.Sprite):
-    def __init__(self, x_pos, y_pos):
+    def __init__(self, wall_list, x_pos, y_pos):
         img = ":resources:images/tiles/grassMid.png"
         super().__init__(img, SPRITE_SCALING)
         self.position = [x_pos * GRID_PIXEL_SIZE, y_pos * GRID_PIXEL_SIZE]
+        wall_list.append(self)
 
 def main():
     """ Main method """
