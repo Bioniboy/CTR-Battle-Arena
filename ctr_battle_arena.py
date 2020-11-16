@@ -117,7 +117,7 @@ class Player(arcade.Sprite):
         return self.center_y < -5 * GRID_PIXEL_SIZE
 
     def on_key_press(self, key, can_jump):
-        if key in [arcade.key.UP, arcade.key.W] and can_jump:
+        if key in [arcade.key.UP, arcade.key.W, arcade.key.SPACE] and can_jump:
             self.move(y_vel=JUMP_SPEED)
         elif key in [arcade.key.LEFT, arcade.key.A] and self.left > LEFT_LIMIT:
             self.move(x_vel=-MOVEMENT_SPEED)
@@ -131,7 +131,7 @@ class Player(arcade.Sprite):
         if (key in [arcade.key.LEFT, arcade.key.A] and self.change_x < 0
                 or key in [arcade.key.RIGHT, arcade.key.D] and self.change_x > 0):
             self.move(x_vel=0)
-        if key in [arcade.key.UP, arcade.key.W] and self.change_y > 0:
+        if key in [arcade.key.UP, arcade.key.W, arcade.key.SPACE] and self.change_y > 0:
             self.change_y *= 0.5
 
 
