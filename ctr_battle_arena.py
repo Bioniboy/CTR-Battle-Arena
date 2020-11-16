@@ -106,8 +106,8 @@ class Player(Actor):
         return self.center_y < -5 * GRID_PIXEL_SIZE
 
     def on_key_press(self, key, can_jump):
-        if key in [arcade.key.UP, arcade.key.W] and can_jump:
-            self.change_y = JUMP_SPEED
+        if key in [arcade.key.UP, arcade.key.W, arcade.key.SPACE] and can_jump:
+            self.move(y_vel=JUMP_SPEED)
         elif key in [arcade.key.LEFT, arcade.key.A] and self.left > LEFT_LIMIT:
             self.change_x = -MOVEMENT_SPEED
             self.texture = self.textures[1]
@@ -118,8 +118,8 @@ class Player(Actor):
     def on_key_release(self, key):
         if (key in [arcade.key.LEFT, arcade.key.A] and self.change_x < 0
                 or key in [arcade.key.RIGHT, arcade.key.D] and self.change_x > 0):
-            self.change_x = 0
-        if key in [arcade.key.UP, arcade.key.W] and self.change_y > 0:
+            self.move(x_vel=0)
+        if key in [arcade.key.UP, arcade.key.W, arcade.key.SPACE] and self.change_y > 0:
             self.change_y *= 0.5
     
     def update(self, can_jump):
