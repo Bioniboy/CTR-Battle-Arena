@@ -49,8 +49,6 @@ class MyGame(arcade.Window):
         for actor in self.actor_list:
             actor.update(self.physics_engine[actor].can_jump())
 
-
-
     def on_key_press(self, key, modifiers):
         self.player_sprite.on_key_press(key, self.physics_engine[self.player_sprite].can_jump())
 
@@ -70,6 +68,7 @@ class MyGame(arcade.Window):
         output = f"Health: {health}"
         arcade.draw_text(output, 10, 20,
                          arcade.color.WHITE, 14)
+
 
 class Actor(arcade.Sprite):
     """ All dynamic sprites inherit this """
@@ -127,6 +126,7 @@ class Player(Actor):
         if (self.left <= LEFT_LIMIT and self.change_x < 0 or self.right >= RIGHT_LIMIT and self.change_x > 0):
             self.change_x = 0
 
+
 class Wall(arcade.Sprite):
     """ Static sprite for stationary walls """
     def __init__(self, wall_list, x_pos, y_pos):
@@ -134,6 +134,7 @@ class Wall(arcade.Sprite):
         super().__init__(img, SPRITE_SCALING)
         self.position = [x_pos * GRID_PIXEL_SIZE, y_pos * GRID_PIXEL_SIZE]
         wall_list.append(self)
+
 
 class Goblin(Actor):
     def __init__(self, player, actor_list, wall_list, physics_engine):
