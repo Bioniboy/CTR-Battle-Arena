@@ -32,7 +32,6 @@ class MyGame(arcade.Window):
         self.player_sprite = Player(self.actor_list, self.wall_list, self.physics_engine)
         self.game_over = False
 
-    def setup(self):
         for i in range(18):
             Wall(self.wall_list, i, 0.5)      
 
@@ -142,7 +141,6 @@ class Wall(arcade.Sprite):
 def main():
     """ Main method """
     window = MyGame(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
-    window.setup()
     arcade.run()
 
 
