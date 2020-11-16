@@ -20,98 +20,88 @@ class MyGame(arcade.Window):
     """ Main application class. """
 
     def __init__(self, width, height, title):
-        """
-        Initializer
-        """
-
         super().__init__(width, height, title)
 
         # Sprite lists
         self.wall_list = arcade.SpriteList()
-        self.player_list = arcade.SpriteList()
+        self.actor_list = arcade.SpriteList()
 
-        # Set up the player
-        self.player_sprite = Player()
-        self.player_list.append(self.player_sprite)
-        self.physics_engine = None
-        self.view_left = 0
-        self.view_bottom = 0
-        self.end_of_map = 0
-        self.game_over = False
+        # List of physics engines, one per actor; allows for multiple actors
+        self.physics_engine = {}
 
-    def setup(self):
+        self.player_sprite = Player(self.actor_list, self.wall_list, self.physics_engine)
+        Goblin(self.player_sprite, self.actor_list, self.wall_list, self.physics_engine)
 
-        # Create floor
         for i in range(18):
-            self.wall_list.append(Wall(i, 0.5))
-        self.physics_engine = \
-            arcade.PhysicsEnginePlatformer(self.player_sprite,
-                                           self.wall_list,
-                                           gravity_constant=GRAVITY)
+            Wall(self.wall_list, i, 0.5)      
 
-        # Set the background color
         arcade.set_background_color(arcade.color.SKY_BLUE)
 
     def on_update(self, delta_time):
-        """ Movement and game logic """
-
         # Call update on all sprites
-        self.physics_engine.update()
+        for engine in self.physics_engine.values():
+            engine.update()
 
         # If the player falls off the platform, game over
         if self.player_sprite.is_dead():
-            self.game_over = True
-        if self.game_over:
             arcade.close_window()
+        
+        for actor in self.actor_list:
+            actor.update(self.physics_engine[actor].can_jump())
 
-        if (self.player_sprite.left <= LEFT_LIMIT and self.player_sprite.change_x < 0
-                or self.player_sprite.right >= RIGHT_LIMIT and self.player_sprite.change_x > 0):
-            self.player_sprite.change_x = 0
+
 
     def on_key_press(self, key, modifiers):
-        self.player_sprite.on_key_press(key, self.physics_engine.can_jump())
+        self.player_sprite.on_key_press(key, self.physics_engine[self.player_sprite].can_jump())
 
     def on_key_release(self, key, modifiers):
         self.player_sprite.on_key_release(key)
 
     def on_draw(self):
-        """
-        Render the screen.
-        """
-
-        # This command has to happen before we start drawing
+        """ Render the screen. """
         arcade.start_render()
 
         # Draw the sprites.
         self.wall_list.draw()
-        self.player_list.draw()
+        self.actor_list.draw()
 
         # Put the text on the screen.
-        # Adjust the text position based on the viewport so that we don't
-        # scroll the text too.
-        distance = self.player_sprite.right
-        output = f"Distance: {distance}"
-        arcade.draw_text(output, self.view_left + 10, self.view_bottom + 20,
+        health = self.player_sprite.health
+        output = f"Health: {health}"
+        arcade.draw_text(output, 10, 20,
                          arcade.color.WHITE, 14)
 
-class Player(arcade.Sprite):
-    def __init__(self):
+class Actor(arcade.Sprite):
+    """ All dynamic sprites inherit this """
+    def __init__(self, actor_list, wall_list, physics_engine):
         super().__init__()
-        texture = arcade.load_texture("images/knight-sword.png")
-        self.textures.append(texture)
-        texture = arcade.load_texture("images/knight-sword.png",
-                                      flipped_horizontally=True)
-        self.textures.append(texture)
-        self.texture = self.textures[0]
-        self.scale = SPRITE_SCALING/5
-        self.center_x = 2 * GRID_PIXEL_SIZE
-        self.center_y = 3 * GRID_PIXEL_SIZE
+        self.health = None
 
-    def move(self, x_vel = None, y_vel = None):
+        # Make the sprite drawn and have physics applied
+        actor_list.append(self)
+        physics_engine[self] = arcade.PhysicsEnginePlatformer(self, wall_list, gravity_constant=GRAVITY)
+    
+    def set_vel(self, x_vel = None, y_vel = None):
         if x_vel is not None:
             self.change_x = x_vel
         if y_vel is not None:
             self.change_y = y_vel
+
+    def is_alive(self):
+        return self.health > 0
+
+
+class Player(Actor):
+    """ Sprite for the player """
+    def __init__(self, actor_list, wall_list, physics_engine):
+        super().__init__(actor_list, wall_list, physics_engine)
+        self.textures.append(arcade.load_texture("images/knight-sword.png"))
+        self.textures.append(arcade.load_texture("images/knight-sword.png",
+                                      flipped_horizontally=True))
+        self.texture = self.textures[0]
+        self.scale = SPRITE_SCALING/5
+        self.position = [(RIGHT_LIMIT + LEFT_LIMIT)/2, 4 * GRID_PIXEL_SIZE]
+        self.health = 100
 
     def is_dead(self):
         return self.center_y < -5 * GRID_PIXEL_SIZE
@@ -120,12 +110,11 @@ class Player(arcade.Sprite):
         if key in [arcade.key.UP, arcade.key.W, arcade.key.SPACE] and can_jump:
             self.move(y_vel=JUMP_SPEED)
         elif key in [arcade.key.LEFT, arcade.key.A] and self.left > LEFT_LIMIT:
-            self.move(x_vel=-MOVEMENT_SPEED)
+            self.change_x = -MOVEMENT_SPEED
             self.texture = self.textures[1]
         elif key in [arcade.key.RIGHT, arcade.key.D] and self.right < RIGHT_LIMIT:
-            self.move(x_vel=MOVEMENT_SPEED)
+            self.change_x = MOVEMENT_SPEED
             self.texture = self.textures[0]
-
 
     def on_key_release(self, key):
         if (key in [arcade.key.LEFT, arcade.key.A] and self.change_x < 0
@@ -133,19 +122,48 @@ class Player(arcade.Sprite):
             self.move(x_vel=0)
         if key in [arcade.key.UP, arcade.key.W, arcade.key.SPACE] and self.change_y > 0:
             self.change_y *= 0.5
-
+    
+    def update(self, can_jump):
+        if (self.left <= LEFT_LIMIT and self.change_x < 0 or self.right >= RIGHT_LIMIT and self.change_x > 0):
+            self.change_x = 0
 
 class Wall(arcade.Sprite):
-    def __init__(self, x_pos, y_pos):
+    """ Static sprite for stationary walls """
+    def __init__(self, wall_list, x_pos, y_pos):
         img = ":resources:images/tiles/grassMid.png"
         super().__init__(img, SPRITE_SCALING)
-        self.center_x = x_pos * GRID_PIXEL_SIZE
-        self.center_y = y_pos * GRID_PIXEL_SIZE
+        self.position = [x_pos * GRID_PIXEL_SIZE, y_pos * GRID_PIXEL_SIZE]
+        wall_list.append(self)
+
+class Goblin(Actor):
+    def __init__(self, player, actor_list, wall_list, physics_engine):
+        super().__init__(actor_list, wall_list, physics_engine)
+        self.textures.append(arcade.load_texture(":resources:images/enemies/wormGreen.png"))
+        self.textures.append(arcade.load_texture(":resources:images/enemies/wormGreen.png",
+                                      flipped_horizontally=True))
+        self.texture = self.textures[0]
+        self.scale = SPRITE_SCALING
+        self.position = [0, 4 * GRID_PIXEL_SIZE]
+        self.health = 100
+        self.speed = 2
+        self.accel = 0.1
+        self.jump_height = 10
+        self.prey = player
+    
+    def update(self, can_jump):
+        if self.center_x < self.prey.center_x and self.change_x < self.speed:
+            self.change_x += self.accel
+            self.texture = self.textures[1]
+        elif self.center_x > self.prey.center_x and self.change_x > -self.speed:
+            self.change_x -= self.accel
+            self.texture = self.textures[0]
+        if self.bottom + 10 < self.prey.bottom and can_jump and abs(self.center_x - self.prey.center_x) < 150:
+            self.change_y = self.jump_height
+            
 
 def main():
     """ Main method """
     window = MyGame(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
-    window.setup()
     arcade.run()
 
 
