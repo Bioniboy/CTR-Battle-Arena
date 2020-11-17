@@ -24,13 +24,15 @@ class MyGame(arcade.Window):
 
         # Sprite lists
         self.wall_list = arcade.SpriteList()
+        self.player_list = arcade.SpriteList()
         self.actor_list = arcade.SpriteList()
+        self.enemy_list = arcade.SpriteList()
 
         # List of physics engines, one per actor; allows for multiple actors
         self.physics_engine = {}
 
-        self.player_sprite = Player(self.actor_list, self.wall_list, self.physics_engine)
-        Goblin(self.player_sprite, self.actor_list, self.wall_list, self.physics_engine)
+        self.player_sprite = Player(self.actor_list, self.wall_list)
+        Goblin(self.player_sprite, self.actor_list, self.wall_list)
 
         for i in range(18):
             Wall(self.wall_list, i, 0.5, ":resources:images/tiles/grassMid.png")      
@@ -47,10 +49,11 @@ class MyGame(arcade.Window):
             arcade.close_window()
         
         for actor in self.actor_list:
-            actor.update(self.physics_engine[actor].can_jump())
+            actor.update()
+            actor.physics_engine.update()
 
     def on_key_press(self, key, modifiers):
-        self.player_sprite.on_key_press(key, self.physics_engine[self.player_sprite].can_jump())
+        self.player_sprite.on_key_press(key)
 
     def on_key_release(self, key, modifiers):
         self.player_sprite.on_key_release(key)
@@ -72,13 +75,13 @@ class MyGame(arcade.Window):
 
 class Actor(arcade.Sprite):
     """ All dynamic sprites inherit this """
-    def __init__(self, actor_list, wall_list, physics_engine):
+    def __init__(self, actor_list, wall_list):
         super().__init__()
         self.health = None
 
         # Make the sprite drawn and have physics applied
         actor_list.append(self)
-        physics_engine[self] = arcade.PhysicsEnginePlatformer(self, wall_list, gravity_constant=GRAVITY)
+        self.physics_engine = arcade.PhysicsEnginePlatformer(self, wall_list, gravity_constant=GRAVITY)
     
     def set_vel(self, x_vel = None, y_vel = None):
         if x_vel is not None:
@@ -92,21 +95,22 @@ class Actor(arcade.Sprite):
 
 class Player(Actor):
     """ Sprite for the player """
-    def __init__(self, actor_list, wall_list, physics_engine):
-        super().__init__(actor_list, wall_list, physics_engine)
+    def __init__(self, actor_list, wall_list, enemy_list):
+        super().__init__(actor_list, wall_list)
         self.textures.append(arcade.load_texture("images/knight-sword.png"))
         self.textures.append(arcade.load_texture("images/knight-sword.png",
                                       flipped_horizontally=True))
         self.texture = self.textures[0]
         self.scale = SPRITE_SCALING/5
         self.position = [(RIGHT_LIMIT + LEFT_LIMIT)/2, 4 * GRID_PIXEL_SIZE]
+        self.enemies = enemy_list
         self.health = 100
 
     def is_dead(self):
         return self.center_y < -5 * GRID_PIXEL_SIZE
 
-    def on_key_press(self, key, can_jump):
-        if key in [arcade.key.UP, arcade.key.W, arcade.key.SPACE] and can_jump:
+    def on_key_press(self, key):
+        if key in [arcade.key.UP, arcade.key.W, arcade.key.SPACE] and self.physics_engine.can_jump():
             self.change_y = JUMP_SPEED
         elif key in [arcade.key.LEFT, arcade.key.A] and self.left > LEFT_LIMIT:
             self.change_x = -MOVEMENT_SPEED
@@ -122,10 +126,10 @@ class Player(Actor):
         if key in [arcade.key.UP, arcade.key.W, arcade.key.SPACE] and self.change_y > 0:
             self.change_y *= 0.5
     
-    def update(self, can_jump):
+    def update(self):
         if (self.left <= LEFT_LIMIT and self.change_x < 0 or self.right >= RIGHT_LIMIT and self.change_x > 0):
             self.change_x = 0
-
+        
 
 class Wall(arcade.Sprite):
     """ Static sprite for stationary walls """
@@ -136,8 +140,8 @@ class Wall(arcade.Sprite):
 
 
 class Goblin(Actor):
-    def __init__(self, player, actor_list, wall_list, physics_engine):
-        super().__init__(actor_list, wall_list, physics_engine)
+    def __init__(self, player, actor_list, wall_list):
+        super().__init__(actor_list, wall_list)
         self.textures.append(arcade.load_texture(":resources:images/enemies/wormGreen.png"))
         self.textures.append(arcade.load_texture(":resources:images/enemies/wormGreen.png",
                                       flipped_horizontally=True))
@@ -150,14 +154,14 @@ class Goblin(Actor):
         self.jump_height = 10
         self.prey = player
     
-    def update(self, can_jump):
+    def update(self):
         if self.center_x < self.prey.center_x and self.change_x < self.speed:
             self.change_x += self.accel
             self.texture = self.textures[1]
         elif self.center_x > self.prey.center_x and self.change_x > -self.speed:
             self.change_x -= self.accel
             self.texture = self.textures[0]
-        if self.bottom + 10 < self.prey.bottom and can_jump and abs(self.center_x - self.prey.center_x) < 150:
+        if self.bottom + 10 < self.prey.bottom and self.physics_engine.can_jump() and abs(self.center_x - self.prey.center_x) < 150:
             self.change_y = self.jump_height
             
 
