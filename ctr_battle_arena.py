@@ -33,7 +33,7 @@ class MyGame(arcade.Window):
         Goblin(self.player_sprite, self.actor_list, self.wall_list, self.physics_engine)
 
         for i in range(18):
-            Wall(self.wall_list, i, 0.5)      
+            Wall(self.wall_list, i, 0.5, ":resources:images/tiles/grassMid.png")      
 
         arcade.set_background_color(arcade.color.SKY_BLUE)
 
@@ -129,8 +129,7 @@ class Player(Actor):
 
 class Wall(arcade.Sprite):
     """ Static sprite for stationary walls """
-    def __init__(self, wall_list, x_pos, y_pos):
-        img = ":resources:images/tiles/grassMid.png"
+    def __init__(self, wall_list, x_pos, y_pos, img):
         super().__init__(img, SPRITE_SCALING)
         self.position = [x_pos * GRID_PIXEL_SIZE, y_pos * GRID_PIXEL_SIZE]
         wall_list.append(self)
