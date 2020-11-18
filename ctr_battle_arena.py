@@ -31,14 +31,12 @@ class MyGame(arcade.Window):
 
         self.player_sprite = Player(self.actor_list, self.wall_list, self.physics_engine)
         Goblin(self.player_sprite, self.actor_list, self.wall_list, self.physics_engine)
+        Dragon(self.player_sprite, self.actor_list, self.wall_list, self.physics_engine)
 
-<<<<<<< Updated upstream
-        for i in range(18):
-            Wall(self.wall_list, i, 0.5, ":resources:images/tiles/grassMid.png")      
-=======
+
         for i in range(30):
-            Wall(self.wall_list, i, 0.5)      
->>>>>>> Stashed changes
+            Wall(self.wall_list, i, 0.5, ":resources:images/tiles/grassMid.png")      
+
 
         arcade.set_background_color(arcade.color.SKY_BLUE)
 
@@ -172,7 +170,7 @@ class Dragon(Actor):
         self.textures.append(arcade.load_texture("images/dragon.png",
                                       flipped_horizontally=True))
         self.texture = self.textures[0]
-        self.scale = SPRITE_SCALING
+        self.scale = SPRITE_SCALING/1.5
 
         self.position = [0, 4 * GRID_PIXEL_SIZE]
         self.health = 100
