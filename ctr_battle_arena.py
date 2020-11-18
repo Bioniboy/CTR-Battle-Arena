@@ -3,18 +3,18 @@ import images
 
 SPRITE_SCALING = 0.5
 
-SCREEN_WIDTH = 1000
-SCREEN_HEIGHT = 600
+SCREEN_WIDTH = 1750
+SCREEN_HEIGHT = 1000
 SCREEN_TITLE = "CTR Battle Arena"
 SPRITE_PIXEL_SIZE = 128
 GRID_PIXEL_SIZE = (SPRITE_PIXEL_SIZE * SPRITE_SCALING)
 LEFT_LIMIT = 0
-RIGHT_LIMIT = 1000
+RIGHT_LIMIT = SCREEN_WIDTH
 
 # Physics
 MOVEMENT_SPEED = 10 * SPRITE_SCALING
 JUMP_SPEED = 20 * SPRITE_SCALING
-GRAVITY = .9 * SPRITE_SCALING
+GRAVITY = .75 * SPRITE_SCALING
 
 class MyGame(arcade.Window):
     """ Main application class. """
@@ -32,8 +32,13 @@ class MyGame(arcade.Window):
         self.player_sprite = Player(self.actor_list, self.wall_list, self.physics_engine)
         Goblin(self.player_sprite, self.actor_list, self.wall_list, self.physics_engine)
 
+<<<<<<< Updated upstream
         for i in range(18):
             Wall(self.wall_list, i, 0.5, ":resources:images/tiles/grassMid.png")      
+=======
+        for i in range(30):
+            Wall(self.wall_list, i, 0.5)      
+>>>>>>> Stashed changes
 
         arcade.set_background_color(arcade.color.SKY_BLUE)
 
@@ -94,8 +99,8 @@ class Player(Actor):
     """ Sprite for the player """
     def __init__(self, actor_list, wall_list, physics_engine):
         super().__init__(actor_list, wall_list, physics_engine)
-        self.textures.append(arcade.load_texture("images/knight-sword.png"))
-        self.textures.append(arcade.load_texture("images/knight-sword.png",
+        self.textures.append(arcade.load_texture("images/KnightWithSword.png"))
+        self.textures.append(arcade.load_texture("images/KnightWithSword.png",
                                       flipped_horizontally=True))
         self.texture = self.textures[0]
         self.scale = SPRITE_SCALING/5
@@ -110,10 +115,10 @@ class Player(Actor):
             self.change_y = JUMP_SPEED
         elif key in [arcade.key.LEFT, arcade.key.A] and self.left > LEFT_LIMIT:
             self.change_x = -MOVEMENT_SPEED
-            self.texture = self.textures[1]
+            self.texture = self.textures[0]
         elif key in [arcade.key.RIGHT, arcade.key.D] and self.right < RIGHT_LIMIT:
             self.change_x = MOVEMENT_SPEED
-            self.texture = self.textures[0]
+            self.texture = self.textures[1]
 
     def on_key_release(self, key):
         if (key in [arcade.key.LEFT, arcade.key.A] and self.change_x < 0
@@ -134,22 +139,22 @@ class Wall(arcade.Sprite):
         self.position = [x_pos * GRID_PIXEL_SIZE, y_pos * GRID_PIXEL_SIZE]
         wall_list.append(self)
 
-
 class Goblin(Actor):
     def __init__(self, player, actor_list, wall_list, physics_engine):
         super().__init__(actor_list, wall_list, physics_engine)
-        self.textures.append(arcade.load_texture(":resources:images/enemies/wormGreen.png"))
-        self.textures.append(arcade.load_texture(":resources:images/enemies/wormGreen.png",
+        self.textures.append(arcade.load_texture("images/orc.png"))
+        self.textures.append(arcade.load_texture("images/orc.png",
                                       flipped_horizontally=True))
         self.texture = self.textures[0]
-        self.scale = SPRITE_SCALING
+        self.scale = SPRITE_SCALING/5
+
         self.position = [0, 4 * GRID_PIXEL_SIZE]
         self.health = 100
         self.speed = 2
         self.accel = 0.1
         self.jump_height = 10
         self.prey = player
-    
+
     def update(self, can_jump):
         if self.center_x < self.prey.center_x and self.change_x < self.speed:
             self.change_x += self.accel
@@ -159,7 +164,33 @@ class Goblin(Actor):
             self.texture = self.textures[0]
         if self.bottom + 10 < self.prey.bottom and can_jump and abs(self.center_x - self.prey.center_x) < 150:
             self.change_y = self.jump_height
-            
+
+class Dragon(Actor):
+    def __init__(self, player, actor_list, wall_list, physics_engine):
+        super().__init__(actor_list, wall_list, physics_engine)
+        self.textures.append(arcade.load_texture("images/dragon.png"))
+        self.textures.append(arcade.load_texture("images/dragon.png",
+                                      flipped_horizontally=True))
+        self.texture = self.textures[0]
+        self.scale = SPRITE_SCALING
+
+        self.position = [0, 4 * GRID_PIXEL_SIZE]
+        self.health = 100
+        self.speed = 2
+        self.accel = 0.1
+        self.jump_height = 10
+        self.prey = player
+
+    def update(self, can_jump):
+        if self.center_x < self.prey.center_x and self.change_x < self.speed:
+            self.change_x += self.accel
+            self.texture = self.textures[1]
+        elif self.center_x > self.prey.center_x and self.change_x > -self.speed:
+            self.change_x -= self.accel
+            self.texture = self.textures[0]
+        if self.bottom + 10 < self.prey.bottom and can_jump and abs(self.center_x - self.prey.center_x) < 150:
+            self.change_y = self.jump_height
+                
 
 def main():
     """ Main method """
