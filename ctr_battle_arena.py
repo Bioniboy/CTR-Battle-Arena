@@ -16,11 +16,11 @@ MOVEMENT_SPEED = 10 * SPRITE_SCALING
 JUMP_SPEED = 20 * SPRITE_SCALING
 GRAVITY = .75 * SPRITE_SCALING
 
-class MyGame(arcade.Window):
+class GameView(arcade.View):
     """ Main application class. """
 
-    def __init__(self, width, height, title):
-        super().__init__(width, height, title)
+    def __init__(self):
+        super().__init__()
 
         # Sprite lists
         self.wall_list = arcade.SpriteList()
@@ -166,6 +166,7 @@ class Goblin(Actor):
 class Dragon(Actor):
     def __init__(self, player, actor_list, wall_list, physics_engine):
         super().__init__(actor_list, wall_list, physics_engine)
+        physics_engine[self] = arcade.PhysicsEnginePlatformer(self, wall_list, gravity_constant=0)
         self.textures.append(arcade.load_texture("images/dragon.png"))
         self.textures.append(arcade.load_texture("images/dragon.png",
                                       flipped_horizontally=True))
@@ -174,7 +175,7 @@ class Dragon(Actor):
 
         self.position = [0, 4 * GRID_PIXEL_SIZE]
         self.health = 100
-        self.speed = 2
+        self.speed = 5
         self.accel = 0.1
         self.jump_height = 10
         self.prey = player
@@ -186,13 +187,18 @@ class Dragon(Actor):
         elif self.center_x > self.prey.center_x and self.change_x > -self.speed:
             self.change_x -= self.accel
             self.texture = self.textures[0]
-        if self.bottom + 10 < self.prey.bottom and can_jump and abs(self.center_x - self.prey.center_x) < 150:
-            self.change_y = self.jump_height
-                
+
+        if self.center_y < self.prey.center_y and self.change_y < self.speed:
+            self.change_y += self.accel
+        elif self.center_y > self.prey.center_y and self.change_y > -self.speed:
+            self.change_y -= self.accel
+        
 
 def main():
     """ Main method """
-    window = MyGame(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
+    window = arcade.Window(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
+    start_view = GameView()
+    window.show_view(start_view)
     arcade.run()
 
 
