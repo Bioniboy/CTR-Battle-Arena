@@ -4,25 +4,25 @@ import math
 
 SPRITE_SCALING = 0.5
 
-SCREEN_WIDTH = 1000
-SCREEN_HEIGHT = 600
+SCREEN_WIDTH = 1750
+SCREEN_HEIGHT = 1000
 SCREEN_TITLE = "CTR Battle Arena"
 SPRITE_PIXEL_SIZE = 128
 GRID_PIXEL_SIZE = (SPRITE_PIXEL_SIZE * SPRITE_SCALING)
 LEFT_LIMIT = 0
-RIGHT_LIMIT = 1000
+RIGHT_LIMIT = SCREEN_WIDTH
 
 # Physics
 MOVEMENT_SPEED = 10 * SPRITE_SCALING
 JUMP_SPEED = 20 * SPRITE_SCALING
-GRAVITY = .9 * SPRITE_SCALING
+GRAVITY = .75 * SPRITE_SCALING
 FRICTION = 1.1
 
-class MyGame(arcade.Window):
+class GameView(arcade.View):
     """ Main application class. """
 
-    def __init__(self, width, height, title):
-        super().__init__(width, height, title)
+    def __init__(self):
+        super().__init__()
 
         # Sprite lists
         self.wall_list = arcade.SpriteList()
@@ -35,9 +35,12 @@ class MyGame(arcade.Window):
 
         self.player_sprite = Player(self.actor_list, self.wall_list, self.enemy_list)
         Goblin(self.player_sprite, self.actor_list, self.enemy_list, self.wall_list)
+        Dragon(self.player_sprite, self.actor_list, self.enemy_list, self.wall_list)
 
-        for i in range(18):
+
+        for i in range(30):
             Wall(self.wall_list, i, 0.5, ":resources:images/tiles/grassMid.png")      
+
 
         arcade.set_background_color(arcade.color.SKY_BLUE)
 
@@ -58,6 +61,9 @@ class MyGame(arcade.Window):
 
     def on_key_press(self, key, modifiers):
         self.player_sprite.on_key_press(key)
+        if key in [arcade.key.ESCAPE]:
+            upgrade_view = UpgradeView()
+            self.window.show_view(upgrade_view)
 
     def on_key_release(self, key, modifiers):
         self.player_sprite.on_key_release(key)
@@ -76,6 +82,52 @@ class MyGame(arcade.Window):
         arcade.draw_text(output, 10, 20,
                          arcade.color.WHITE, 14)
 
+class InstructionView(arcade.View):
+    """ View to show instructions """
+
+    def on_show(self):
+        """ This is run once when we switch to this view """
+        arcade.set_background_color(arcade.csscolor.DARK_SLATE_BLUE)
+
+        # Reset the viewport, necessary if we have a scrolling game and we need
+        # to reset the viewport back to the start so we can see what we draw.
+        arcade.set_viewport(0, SCREEN_WIDTH - 1, 0, SCREEN_HEIGHT - 1)
+
+    def on_draw(self):
+        """ Draw this view """
+        arcade.start_render()
+        arcade.draw_text("Instructions Screen", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2,
+                         arcade.color.WHITE, font_size=50, anchor_x="center")
+        arcade.draw_text("Click to advance", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2-75,
+                         arcade.color.WHITE, font_size=20, anchor_x="center")
+
+    def on_mouse_press(self, _x, _y, _button, _modifiers):
+        """ If the user presses the mouse button, start the game. """
+        self.window.show_view(GameView())
+
+class UpgradeView(arcade.View):
+    """ View to show instructions """
+
+    def on_show(self):
+        """ This is run once when we switch to this view """
+        arcade.set_background_color(arcade.csscolor.DARK_SLATE_BLUE)
+
+        # Reset the viewport, necessary if we have a scrolling game and we need
+        # to reset the viewport back to the start so we can see what we draw.
+        arcade.set_viewport(0, SCREEN_WIDTH - 1, 0, SCREEN_HEIGHT - 1)
+
+    def on_draw(self):
+        """ Draw this view """
+        arcade.start_render()
+        arcade.draw_text("Instructions Screen", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2,
+                         arcade.color.WHITE, font_size=50, anchor_x="center")
+        arcade.draw_text("Click to advance", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2-75,
+                         arcade.color.WHITE, font_size=20, anchor_x="center")
+
+    def on_mouse_press(self, _x, _y, _button, _modifiers):
+        """ If the user presses the mouse button, start the game. """
+        game_view = GameView()
+        self.window.show_view(game_view)
 
 class Actor(arcade.Sprite):
     """ All dynamic sprites inherit this """
@@ -130,11 +182,13 @@ class Player(Actor):
         elif key in [arcade.key.LEFT, arcade.key.A]:
             self.walking = "L"
             self.change_x = -MOVEMENT_SPEED
-            self.texture = self.textures[1]
+            self.texture = self.textures[0]
         elif key in [arcade.key.RIGHT, arcade.key.D] and self.right < RIGHT_LIMIT:
             self.walking = "R"
             self.change_x = MOVEMENT_SPEED
-            self.texture = self.textures[0]
+            self.texture = self.textures[1]
+
+        
 
     def on_key_release(self, key):
         if (key in [arcade.key.LEFT, arcade.key.A] and self.walking == "L"
@@ -183,7 +237,8 @@ class Goblin(Enemy):
         self.textures.append(arcade.load_texture(":resources:images/enemies/wormGreen.png",
                                       flipped_horizontally=True))
         self.texture = self.textures[0]
-        self.scale = SPRITE_SCALING
+        self.scale = SPRITE_SCALING/5
+
         self.position = [0, 4 * GRID_PIXEL_SIZE]
         self.health = 100
         self.speed = 2
@@ -191,6 +246,7 @@ class Goblin(Enemy):
         self.jump_height = 10
         self.damage = 1
         self.knockback = 10
+        self.prey = player
         
     
     def update(self):
@@ -203,11 +259,45 @@ class Goblin(Enemy):
         if (self.bottom + 10 < self.prey.bottom and self.physics_engine.can_jump()
                 and abs(self.center_x - self.prey.center_x) < 150):
             self.change_y = self.jump_height
-            
+
+class Dragon(Enemy):
+    def __init__(self, player, actor_list, enemy_list, wall_list):
+        super().__init__(player, actor_list, enemy_list, wall_list)
+        self.physics_engine = arcade.PhysicsEnginePlatformer(self, wall_list, gravity_constant=0)
+        self.textures.append(arcade.load_texture("images/dragon.png"))
+        self.textures.append(arcade.load_texture("images/dragon.png",
+                                      flipped_horizontally=True))
+        self.texture = self.textures[0]
+        self.scale = SPRITE_SCALING/1.5
+
+        self.position = [0, 4 * GRID_PIXEL_SIZE]
+        self.health = 100
+        self.speed = 5
+        self.accel = 0.1
+        self.jump_height = 10
+        self.prey = player
+        self.damage = 5
+        self.knockback = 20
+
+    def update(self):
+        if self.center_x < self.prey.center_x and self.change_x < self.speed:
+            self.change_x += self.accel
+            self.texture = self.textures[1]
+        elif self.center_x > self.prey.center_x and self.change_x > -self.speed:
+            self.change_x -= self.accel
+            self.texture = self.textures[0]
+
+        if self.center_y < self.prey.center_y and self.change_y < self.speed:
+            self.change_y += self.accel
+        elif self.center_y > self.prey.center_y and self.change_y > -self.speed:
+            self.change_y -= self.accel
+        
 
 def main():
     """ Main method """
-    window = MyGame(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
+    window = arcade.Window(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
+    start_view = InstructionView()
+    window.show_view(start_view)
     arcade.run()
 
 
