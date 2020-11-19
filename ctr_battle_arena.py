@@ -34,7 +34,7 @@ class GameView(arcade.View):
         self.physics_engine = {}
 
         self.player_sprite = Player(self.actor_list, self.wall_list, self.enemy_list)
-        Goblin(self.player_sprite, self.actor_list, self.enemy_list, self.wall_list)
+        Orc(self.player_sprite, self.actor_list, self.enemy_list, self.wall_list)
         Dragon(self.player_sprite, self.actor_list, self.enemy_list, self.wall_list)
 
 
@@ -230,11 +230,11 @@ class Enemy(Actor):
         self.prey = player
         enemy_list.append(self)
 
-class Goblin(Enemy):
+class Orc(Enemy):
     def __init__(self, player, actor_list, enemy_list, wall_list):
         super().__init__(player, actor_list, enemy_list, wall_list)
-        self.textures.append(arcade.load_texture(":resources:images/enemies/wormGreen.png"))
-        self.textures.append(arcade.load_texture(":resources:images/enemies/wormGreen.png",
+        self.textures.append(arcade.load_texture("images/orc.png"))
+        self.textures.append(arcade.load_texture("images/orc.png",
                                       flipped_horizontally=True))
         self.texture = self.textures[0]
         self.scale = SPRITE_SCALING/5
