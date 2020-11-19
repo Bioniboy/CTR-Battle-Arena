@@ -252,10 +252,10 @@ class Orc(Enemy):
     def update(self):
         if self.center_x < self.prey.center_x and self.change_x < self.speed:
             self.change_x += self.accel
-            self.texture = self.textures[1]
+            self.texture = self.textures[0]
         elif self.center_x > self.prey.center_x and self.change_x > -self.speed:
             self.change_x -= self.accel
-            self.texture = self.textures[0]
+            self.texture = self.textures[1]
         if (self.bottom + 10 < self.prey.bottom and self.physics_engine.can_jump()
                 and abs(self.center_x - self.prey.center_x) < 150):
             self.change_y = self.jump_height
