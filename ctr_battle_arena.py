@@ -54,6 +54,9 @@ class GameView(arcade.View):
 
     def on_key_press(self, key, modifiers):
         self.player_sprite.on_key_press(key, self.physics_engine[self.player_sprite].can_jump())
+        if key in [arcade.key.ESCAPE]:
+            upgrade_view = UpgradeView()
+            self.window.show_view(upgrade_view)
 
     def on_key_release(self, key, modifiers):
         self.player_sprite.on_key_release(key)
@@ -72,6 +75,53 @@ class GameView(arcade.View):
         arcade.draw_text(output, 10, 20,
                          arcade.color.WHITE, 14)
 
+class InstructionView(arcade.View):
+    """ View to show instructions """
+
+    def on_show(self):
+        """ This is run once when we switch to this view """
+        arcade.set_background_color(arcade.csscolor.DARK_SLATE_BLUE)
+
+        # Reset the viewport, necessary if we have a scrolling game and we need
+        # to reset the viewport back to the start so we can see what we draw.
+        arcade.set_viewport(0, SCREEN_WIDTH - 1, 0, SCREEN_HEIGHT - 1)
+
+    def on_draw(self):
+        """ Draw this view """
+        arcade.start_render()
+        arcade.draw_text("Instructions Screen", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2,
+                         arcade.color.WHITE, font_size=50, anchor_x="center")
+        arcade.draw_text("Click to advance", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2-75,
+                         arcade.color.WHITE, font_size=20, anchor_x="center")
+
+    def on_mouse_press(self, _x, _y, _button, _modifiers):
+        """ If the user presses the mouse button, start the game. """
+        game_view = GameView()
+        self.window.show_view(game_view)
+
+class UpgradeView(arcade.View):
+    """ View to show instructions """
+
+    def on_show(self):
+        """ This is run once when we switch to this view """
+        arcade.set_background_color(arcade.csscolor.DARK_SLATE_BLUE)
+
+        # Reset the viewport, necessary if we have a scrolling game and we need
+        # to reset the viewport back to the start so we can see what we draw.
+        arcade.set_viewport(0, SCREEN_WIDTH - 1, 0, SCREEN_HEIGHT - 1)
+
+    def on_draw(self):
+        """ Draw this view """
+        arcade.start_render()
+        arcade.draw_text("Instructions Screen", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2,
+                         arcade.color.WHITE, font_size=50, anchor_x="center")
+        arcade.draw_text("Click to advance", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2-75,
+                         arcade.color.WHITE, font_size=20, anchor_x="center")
+
+    def on_mouse_press(self, _x, _y, _button, _modifiers):
+        """ If the user presses the mouse button, start the game. """
+        game_view = GameView()
+        self.window.show_view(game_view)
 
 class Actor(arcade.Sprite):
     """ All dynamic sprites inherit this """
@@ -117,6 +167,8 @@ class Player(Actor):
         elif key in [arcade.key.RIGHT, arcade.key.D] and self.right < RIGHT_LIMIT:
             self.change_x = MOVEMENT_SPEED
             self.texture = self.textures[1]
+
+        
 
     def on_key_release(self, key):
         if (key in [arcade.key.LEFT, arcade.key.A] and self.change_x < 0
@@ -197,7 +249,7 @@ class Dragon(Actor):
 def main():
     """ Main method """
     window = arcade.Window(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
-    start_view = GameView()
+    start_view = InstructionView()
     window.show_view(start_view)
     arcade.run()
 
