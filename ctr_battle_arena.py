@@ -25,7 +25,9 @@ class GameView(arcade.View):
         # Sprite lists
         self.wall_list = arcade.SpriteList()
         self.actor_list = arcade.SpriteList()
-        
+
+        # List of physics engines, one per actor; allows for multiple actors
+        self.physics_engine = {}
 
         self.player_sprite = Player(self.actor_list, self.wall_list, self.physics_engine)
         Goblin(self.player_sprite, self.actor_list, self.wall_list, self.physics_engine)
@@ -140,20 +142,7 @@ class Actor(arcade.Sprite):
 
     def is_alive(self):
         return self.health > 0
-    
-    def take_damage(self, source):
-        self.health -= source.damage
-        x_distance = self.center_x - source.center_x
-        y_distance = self.center_y - source.center_y
-        angle = math.atan(x_distance/y_distance)
-        self.accelerate(math.sin(angle) * source.knockback, math.sin(angle) * source.knockback)
-    
-    def accelerate(self, x_accel=None, y_accel=None):
-        if (x_accel is not None and (self.left > LEFT_LIMIT and x_accel < 0
-                or self.right < RIGHT_LIMIT and x_accel > 0)):
-            self.change_x += x_accel
-        if y_accel is not None:
-            self.change_y += y_accel
+
 
 class Player(Actor):
     """ Sprite for the player """
@@ -166,24 +155,21 @@ class Player(Actor):
         self.scale = SPRITE_SCALING/5
         self.position = [(RIGHT_LIMIT + LEFT_LIMIT)/2, 4 * GRID_PIXEL_SIZE]
         self.health = 100
-        self.speed = 5
-        self.jump_speed = 20 * SPRITE_SCALING
-        self.accel = 0.5
-        self.walking = ""
-        self.hit_cooldown = 0
 
     def is_dead(self):
         return self.center_y < -5 * GRID_PIXEL_SIZE
 
-    def on_key_press(self, key):
-        if key in [arcade.key.UP, arcade.key.W, arcade.key.SPACE] and self.physics_engine.can_jump():
-            self.accelerate(y_accel=self.jump_speed)
-        elif key in [arcade.key.LEFT, arcade.key.A]:
-            self.walking = "L"
+    def on_key_press(self, key, can_jump):
+        if key in [arcade.key.UP, arcade.key.W, arcade.key.SPACE] and can_jump:
+            self.change_y = JUMP_SPEED
+        elif key in [arcade.key.LEFT, arcade.key.A] and self.left > LEFT_LIMIT:
+            self.change_x = -MOVEMENT_SPEED
             self.texture = self.textures[0]
         elif key in [arcade.key.RIGHT, arcade.key.D] and self.right < RIGHT_LIMIT:
-            self.walking = "R"
+            self.change_x = MOVEMENT_SPEED
             self.texture = self.textures[1]
+
+        
 
     def on_key_release(self, key):
         if (key in [arcade.key.LEFT, arcade.key.A] and self.change_x < 0
@@ -192,24 +178,9 @@ class Player(Actor):
         if key in [arcade.key.UP, arcade.key.W, arcade.key.SPACE] and self.change_y > 0:
             self.change_y *= 0.5
     
-    def update(self):
-        if (self.left <= LEFT_LIMIT and self.change_x < 0
-                or self.right >= RIGHT_LIMIT and self.change_x > 0):
+    def update(self, can_jump):
+        if (self.left <= LEFT_LIMIT and self.change_x < 0 or self.right >= RIGHT_LIMIT and self.change_x > 0):
             self.change_x = 0
-        if self.hit_cooldown == 0:    
-            for enemy in self.enemies:
-                if self.collides_with_sprite(enemy):
-                    self.take_damage(enemy)
-                    self.hit_cooldown = 50
-        if abs(self.change_x) > 0 and self.physics_engine.can_jump and (self.walking == "" or abs(self.change_x) > self.speed):
-            self.change_x /= FRICTION
-        if self.walking == "L" and self.change_x > -self.speed:
-            self.accelerate(x_accel=-self.accel)
-        elif self.walking == "R" and self.change_x < self.speed:
-            self.accelerate(x_accel=self.accel)
-        if self.hit_cooldown > 0:
-            self.hit_cooldown -= 1
-            
 
 
 class Wall(arcade.Sprite):
@@ -238,12 +209,11 @@ class Goblin(Actor):
     def update(self, can_jump):
         if self.center_x < self.prey.center_x and self.change_x < self.speed:
             self.change_x += self.accel
-            self.texture = self.textures[0]
+            self.texture = self.textures[1]
         elif self.center_x > self.prey.center_x and self.change_x > -self.speed:
             self.change_x -= self.accel
-            self.texture = self.textures[1]
-        if (self.bottom + 10 < self.prey.bottom and self.physics_engine.can_jump()
-                and abs(self.center_x - self.prey.center_x) < 150):
+            self.texture = self.textures[0]
+        if self.bottom + 10 < self.prey.bottom and can_jump and abs(self.center_x - self.prey.center_x) < 150:
             self.change_y = self.jump_height
 
 class Dragon(Actor):
@@ -263,7 +233,7 @@ class Dragon(Actor):
         self.jump_height = 10
         self.prey = player
 
-    def update(self):
+    def update(self, can_jump):
         if self.center_x < self.prey.center_x and self.change_x < self.speed:
             self.change_x += self.accel
             self.texture = self.textures[1]
