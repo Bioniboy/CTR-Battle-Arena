@@ -153,8 +153,14 @@ class Actor(arcade.Sprite):
         x_distance = self.center_x - source.center_x
         y_distance = self.center_y - source.center_y
         angle = math.atan(x_distance/y_distance)
-        self.change_x = math.sin(angle) * source.knockback
-        self.change_y = math.cos(angle) * source.knockback
+        self.accelerate(math.sin(angle) * source.knockback, math.sin(angle) * source.knockback)
+    
+    def accelerate(self, x_accel=None, y_accel=None):
+        if (x_accel is not None and (self.left > LEFT_LIMIT and x_accel < 0
+                or self.right < RIGHT_LIMIT and x_accel > 0)):
+            self.change_x += x_accel
+        if y_accel is not None:
+            self.change_y += y_accel
 
 class Player(Actor):
     """ Sprite for the player """
@@ -169,6 +175,7 @@ class Player(Actor):
         self.enemies = enemy_list
         self.health = 100
         self.speed = 5
+        self.jump_speed = 20 * SPRITE_SCALING
         self.accel = 0.5
         self.walking = ""
         self.hit_cooldown = 0
@@ -178,17 +185,13 @@ class Player(Actor):
 
     def on_key_press(self, key):
         if key in [arcade.key.UP, arcade.key.W, arcade.key.SPACE] and self.physics_engine.can_jump():
-            self.change_y = JUMP_SPEED
+            self.accelerate(y_accel=self.jump_speed)
         elif key in [arcade.key.LEFT, arcade.key.A]:
             self.walking = "L"
-            self.change_x = -MOVEMENT_SPEED
             self.texture = self.textures[0]
         elif key in [arcade.key.RIGHT, arcade.key.D] and self.right < RIGHT_LIMIT:
             self.walking = "R"
-            self.change_x = MOVEMENT_SPEED
             self.texture = self.textures[1]
-
-        
 
     def on_key_release(self, key):
         if (key in [arcade.key.LEFT, arcade.key.A] and self.walking == "L"
@@ -198,20 +201,20 @@ class Player(Actor):
             self.change_y *= 0.5
     
     def update(self):
-        if (self.left <= LEFT_LIMIT and self.walking == "L"
-                or self.right >= RIGHT_LIMIT and self.walking == "R"):
+        if (self.left <= LEFT_LIMIT and self.change_x < 0
+                or self.right >= RIGHT_LIMIT and self.change_x > 0):
             self.change_x = 0
         if self.hit_cooldown == 0:    
             for enemy in self.enemies:
                 if self.collides_with_sprite(enemy):
                     self.take_damage(enemy)
                     self.hit_cooldown = 50
-        if abs(self.change_x) > 0 and self.physics_engine.can_jump and self.walking == "":
+        if abs(self.change_x) > 0 and self.physics_engine.can_jump and (self.walking == "" or abs(self.change_x) > self.speed):
             self.change_x /= FRICTION
-        if self.walking == "L" and self.left > LEFT_LIMIT and self.change_x > -self.speed:
-            self.change_x -= self.accel
-        elif self.walking == "R" and self.right < RIGHT_LIMIT and self.change_x < self.speed:
-            self.change_x += self.accel
+        if self.walking == "L" and self.change_x > -self.speed:
+            self.accelerate(x_accel=-self.accel)
+        elif self.walking == "R" and self.change_x < self.speed:
+            self.accelerate(x_accel=self.accel)
         if self.hit_cooldown > 0:
             self.hit_cooldown -= 1
             
