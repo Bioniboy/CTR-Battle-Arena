@@ -3,8 +3,8 @@ import images
 
 SPRITE_SCALING = 0.5
 
-SCREEN_WIDTH = 1750
-SCREEN_HEIGHT = 1000
+SCREEN_WIDTH = 1000
+SCREEN_HEIGHT = 800
 SCREEN_TITLE = "CTR Battle Arena"
 SPRITE_PIXEL_SIZE = 128
 GRID_PIXEL_SIZE = (SPRITE_PIXEL_SIZE * SPRITE_SCALING)
@@ -148,8 +148,8 @@ class Player(Actor):
     """ Sprite for the player """
     def __init__(self, actor_list, wall_list, physics_engine):
         super().__init__(actor_list, wall_list, physics_engine)
-        self.textures.append(arcade.load_texture("images/KnightWithSword.png"))
-        self.textures.append(arcade.load_texture("images/KnightWithSword.png",
+        self.textures.append(arcade.load_texture("images/knight-sword.png"))
+        self.textures.append(arcade.load_texture("images/knight-sword.png",
                                       flipped_horizontally=True))
         self.texture = self.textures[0]
         self.scale = SPRITE_SCALING/5
