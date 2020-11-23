@@ -16,6 +16,7 @@ MOVEMENT_SPEED = 10 * SPRITE_SCALING
 JUMP_SPEED = 20 * SPRITE_SCALING
 GRAVITY = .75 * SPRITE_SCALING
 
+
 class GameView(arcade.View):
     """ Main application class. """
 
@@ -55,7 +56,7 @@ class GameView(arcade.View):
     def on_key_press(self, key, modifiers):
         self.player_sprite.on_key_press(key, self.physics_engine[self.player_sprite].can_jump())
         if key in [arcade.key.ESCAPE]:
-            upgrade_view = UpgradeView()
+            upgrade_view = UpgradeView(self)
             self.window.show_view(upgrade_view)
 
     def on_key_release(self, key, modifiers):
@@ -100,28 +101,52 @@ class InstructionView(arcade.View):
         self.window.show_view(game_view)
 
 class UpgradeView(arcade.View):
-    """ View to show instructions """
+    def __init__(self, game_view):
+        super().__init__()
+        self.game_view = game_view
 
     def on_show(self):
-        """ This is run once when we switch to this view """
-        arcade.set_background_color(arcade.csscolor.DARK_SLATE_BLUE)
-
-        # Reset the viewport, necessary if we have a scrolling game and we need
-        # to reset the viewport back to the start so we can see what we draw.
-        arcade.set_viewport(0, SCREEN_WIDTH - 1, 0, SCREEN_HEIGHT - 1)
+        arcade.set_background_color(arcade.color.SKY_BLUE)
 
     def on_draw(self):
-        """ Draw this view """
         arcade.start_render()
-        arcade.draw_text("Instructions Screen", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2,
-                         arcade.color.WHITE, font_size=50, anchor_x="center")
-        arcade.draw_text("Click to advance", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2-75,
-                         arcade.color.WHITE, font_size=20, anchor_x="center")
 
-    def on_mouse_press(self, _x, _y, _button, _modifiers):
-        """ If the user presses the mouse button, start the game. """
-        game_view = GameView()
-        self.window.show_view(game_view)
+        # Draw player, for effect, on pause screen.
+        # The previous View (GameView) was passed in
+        # and saved in self.game_view.
+        player_sprite = self.game_view.player_sprite
+        player_sprite.draw()
+
+        # draw an orange filter over him
+        arcade.draw_lrtb_rectangle_filled(left=player_sprite.left,
+                                          right=player_sprite.right,
+                                          top=player_sprite.top,
+                                          bottom=player_sprite.bottom,
+                                          color=arcade.color.SKY_BLUE + (200,))
+
+        arcade.draw_text("PAUSED", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2+50,
+                         arcade.color.BLACK, font_size=50, anchor_x="center")
+
+        # Show tip to return or reset
+        arcade.draw_text("Press Esc. to return",
+                         SCREEN_WIDTH / 2,
+                         SCREEN_HEIGHT / 2,
+                         arcade.color.BLACK,
+                         font_size=20,
+                         anchor_x="center")
+        arcade.draw_text("Press Enter to reset",
+                         SCREEN_WIDTH / 2,
+                         SCREEN_HEIGHT / 2-30,
+                         arcade.color.BLACK,
+                         font_size=20,
+                         anchor_x="center")
+
+    def on_key_press(self, key, _modifiers):
+        if key == arcade.key.ESCAPE:   # resume game
+            self.window.show_view(self.game_view)
+        elif key == arcade.key.ENTER:  # reset game
+            game = GameView()
+            self.window.show_view(game)
 
 class Actor(arcade.Sprite):
     """ All dynamic sprites inherit this """
