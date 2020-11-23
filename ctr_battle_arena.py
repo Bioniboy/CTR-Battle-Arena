@@ -191,11 +191,11 @@ class Player(Actor):
     """ Sprite for the player """
     def __init__(self, actor_list, wall_list, enemy_list):
         super().__init__(actor_list, wall_list)
-        self.textures.append(arcade.load_texture("images/knight-sword.png"))
-        self.textures.append(arcade.load_texture("images/knight-sword.png",
+        self.textures.append(arcade.load_texture("images/Knight.png"))
+        self.textures.append(arcade.load_texture("images/Knight.png",
                                       flipped_horizontally=True))
         self.texture = self.textures[0]
-        self.scale = SPRITE_SCALING/5
+        self.scale = SPRITE_SCALING/4
         self.position = [(RIGHT_LIMIT + LEFT_LIMIT)/2, 4 * GRID_PIXEL_SIZE]
         self.enemies = enemy_list
         self.health = 100
