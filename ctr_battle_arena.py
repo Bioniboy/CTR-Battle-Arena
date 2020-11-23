@@ -55,7 +55,8 @@ class GameView(arcade.View):
         
         for actor in self.actor_list:
             actor.update()
-            actor.physics_engine.update()
+            if actor.physics_engine is not None:
+                actor.physics_engine.update()
             if not actor.is_alive():
                 actor.kill()
 
@@ -67,6 +68,9 @@ class GameView(arcade.View):
 
     def on_key_release(self, key, modifiers):
         self.player_sprite.on_key_release(key)
+    
+    def on_mouse_press(self, _x, _y, _button, _modifiers):
+        self.player_sprite.on_mouse_press(self.actor_list)
 
     def on_draw(self):
         """ Render the screen. """
@@ -134,7 +138,8 @@ class Actor(arcade.Sprite):
     def __init__(self, actor_list, wall_list):
         super().__init__()
         self.health = None
-
+        self.boundary_left = LEFT_LIMIT
+        self.boundary_right = RIGHT_LIMIT
         # Make the sprite drawn and have physics applied
         actor_list.append(self)
         self.physics_engine = arcade.PhysicsEnginePlatformer(self, wall_list, gravity_constant=GRAVITY)
@@ -177,7 +182,10 @@ class Player(Actor):
         self.speed = 5
         self.jump_speed = 20 * SPRITE_SCALING
         self.accel = 0.5
-        self.walking = ""
+        self.damage = 5
+        self.knockback = 10
+        self.walking = False
+        self.direction = "L"
         self.hit_cooldown = 0
 
     def is_dead(self):
@@ -187,18 +195,33 @@ class Player(Actor):
         if key in [arcade.key.UP, arcade.key.W, arcade.key.SPACE] and self.physics_engine.can_jump():
             self.accelerate(y_accel=self.jump_speed)
         elif key in [arcade.key.LEFT, arcade.key.A]:
-            self.walking = "L"
+            self.walking = True
+            self.direction = "L"
             self.texture = self.textures[0]
         elif key in [arcade.key.RIGHT, arcade.key.D] and self.right < RIGHT_LIMIT:
-            self.walking = "R"
+            self.walking = True
+            self.direction = "R"
             self.texture = self.textures[1]
 
     def on_key_release(self, key):
-        if (key in [arcade.key.LEFT, arcade.key.A] and self.walking == "L"
-                or key in [arcade.key.RIGHT, arcade.key.D] and self.walking == "R"):
-            self.walking = ""
+        if (key in [arcade.key.LEFT, arcade.key.A] and self.direction == "L"
+                or key in [arcade.key.RIGHT, arcade.key.D] and self.direction == "R"):
+            self.walking = False
         if key in [arcade.key.UP, arcade.key.W, arcade.key.SPACE] and self.change_y > 0:
             self.change_y *= 0.5
+
+    def on_mouse_press(self, actor_list):
+        self.swing_sword(actor_list)
+    
+    def swing_sword(self, actor_list):
+        if self.direction == "L":
+            x_pos = self.left
+        else:
+            x_pos = self.right
+        swing = Swing(actor_list, x_pos, self.center_y, self.direction, self)
+        for enemy in self.enemies:
+            if swing.collides_with_sprite(enemy):
+                    enemy.take_damage(self)
     
     def update(self):
         if (self.left <= LEFT_LIMIT and self.change_x < 0
@@ -209,16 +232,36 @@ class Player(Actor):
                 if self.collides_with_sprite(enemy):
                     self.take_damage(enemy)
                     self.hit_cooldown = 50
-        if abs(self.change_x) > 0 and self.physics_engine.can_jump and (self.walking == "" or abs(self.change_x) > self.speed):
+        if abs(self.change_x) > 0 and self.physics_engine.can_jump and (not self.walking or abs(self.change_x) > self.speed):
             self.change_x /= FRICTION
-        if self.walking == "L" and self.change_x > -self.speed:
+        if self.walking and self.direction == "L" and self.change_x > -self.speed:
             self.accelerate(x_accel=-self.accel)
-        elif self.walking == "R" and self.change_x < self.speed:
+        elif self.walking and self.direction == "R" and self.change_x < self.speed:
             self.accelerate(x_accel=self.accel)
         if self.hit_cooldown > 0:
             self.hit_cooldown -= 1
-            
 
+
+class Swing(arcade.Sprite):
+    def __init__(self, actor_list, x_pos, y_pos, direction, source):
+        super().__init__()
+        actor_list.append(self)
+        self.health = 10
+        self.physics_engine = None
+        self.position = [x_pos, y_pos]
+        self.scale = 1.5
+        self.source = source
+        if direction == "L":
+            self.texture = arcade.load_texture("images/swing.png")
+        else:
+            self.texture = arcade.load_texture("images/swing.png", 
+                                        flipped_horizontally=True)
+        
+    def is_alive(self):
+        return self.health > 0
+    
+    def update(self):
+        self.health -= 1
 
 class Wall(arcade.Sprite):
     """ Static sprite for stationary walls """
@@ -251,7 +294,6 @@ class Orc(Enemy):
         self.knockback = 10
         self.prey = player
         
-    
     def update(self):
         if self.center_x < self.prey.center_x and self.change_x < self.speed:
             self.change_x += self.accel
