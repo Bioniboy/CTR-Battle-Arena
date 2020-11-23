@@ -153,6 +153,7 @@ class UpgradeView(arcade.View):
 
     def on_key_press(self, key, _modifiers):
         if key == arcade.key.ESCAPE:   # resume game
+            self.game_view.player_sprite.walking = False
             self.window.show_view(self.game_view)
         elif key == arcade.key.ENTER:  # reset game
             game = GameView()
