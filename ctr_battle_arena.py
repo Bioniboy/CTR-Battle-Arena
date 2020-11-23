@@ -28,25 +28,24 @@ class GameView(arcade.View):
         self.wall_list = arcade.SpriteList()
         self.player_list = arcade.SpriteList()
         self.actor_list = arcade.SpriteList()
-<<<<<<< HEAD
-        
-=======
         self.enemy_list = arcade.SpriteList()
 
         # List of physics engines, one per actor; allows for multiple actors
         self.physics_engine = {}
->>>>>>> parent of fb3a5b6... Update ctr_battle_arena.py
 
         self.player_sprite = Player(self.actor_list, self.wall_list, self.enemy_list)
         Orc(self.player_sprite, self.actor_list, self.enemy_list, self.wall_list)
         Dragon(self.player_sprite, self.actor_list, self.enemy_list, self.wall_list)
 
-
-        for i in range(30):
-            Wall(self.wall_list, i, 0.5, ":resources:images/tiles/grassMid.png")      
-
-
         arcade.set_background_color(arcade.color.SKY_BLUE)
+        self.setup()
+
+        
+    def setup(self):
+        for i in range(30):
+            Wall(self.wall_list, i, 0.5, ":resources:images/tiles/grassMid.png")  
+
+
 
     def on_update(self, delta_time):
         # Call update on all sprites
@@ -157,21 +156,6 @@ class Actor(arcade.Sprite):
         x_distance = self.center_x - source.center_x
         y_distance = self.center_y - source.center_y
         angle = math.atan(x_distance/y_distance)
-<<<<<<< HEAD
-        self.accelerate(math.sin(angle) * source.knockback, math.sin(angle) * source.knockback)
-    
-    def accelerate(self, x_accel=None, y_accel=None):
-        if (x_accel is not None and (self.left > LEFT_LIMIT and x_accel < 0
-                or self.right < RIGHT_LIMIT and x_accel > 0)):
-            self.change_x += x_accel
-        if y_accel is not None:
-            self.change_y += y_accel
-
-class Player(Actor):
-    """ Sprite for the player """
-    def __init__(self, actor_list, wall_list, physics_engine):
-        super().__init__(actor_list, wall_list, physics_engine)
-=======
         self.change_x = math.sin(angle) * source.knockback
         self.change_y = math.cos(angle) * source.knockback
 
@@ -179,7 +163,6 @@ class Player(Actor):
     """ Sprite for the player """
     def __init__(self, actor_list, wall_list, enemy_list):
         super().__init__(actor_list, wall_list)
->>>>>>> parent of fb3a5b6... Update ctr_battle_arena.py
         self.textures.append(arcade.load_texture("images/knight-sword.png"))
         self.textures.append(arcade.load_texture("images/knight-sword.png",
                                       flipped_horizontally=True))
@@ -189,10 +172,6 @@ class Player(Actor):
         self.enemies = enemy_list
         self.health = 100
         self.speed = 5
-<<<<<<< HEAD
-        self.jump_speed = 20 * SPRITE_SCALING
-=======
->>>>>>> parent of fb3a5b6... Update ctr_battle_arena.py
         self.accel = 0.5
         self.walking = ""
         self.hit_cooldown = 0
@@ -202,14 +181,6 @@ class Player(Actor):
 
     def on_key_press(self, key):
         if key in [arcade.key.UP, arcade.key.W, arcade.key.SPACE] and self.physics_engine.can_jump():
-<<<<<<< HEAD
-            self.accelerate(y_accel=self.jump_speed)
-        elif key in [arcade.key.LEFT, arcade.key.A]:
-            self.walking = "L"
-            self.texture = self.textures[0]
-        elif key in [arcade.key.RIGHT, arcade.key.D] and self.right < RIGHT_LIMIT:
-            self.walking = "R"
-=======
             self.change_y = JUMP_SPEED
         elif key in [arcade.key.LEFT, arcade.key.A]:
             self.walking = "L"
@@ -218,7 +189,6 @@ class Player(Actor):
         elif key in [arcade.key.RIGHT, arcade.key.D] and self.right < RIGHT_LIMIT:
             self.walking = "R"
             self.change_x = MOVEMENT_SPEED
->>>>>>> parent of fb3a5b6... Update ctr_battle_arena.py
             self.texture = self.textures[1]
 
     def on_key_release(self, key):
@@ -229,34 +199,20 @@ class Player(Actor):
             self.change_y *= 0.5
     
     def update(self):
-<<<<<<< HEAD
-        if (self.left <= LEFT_LIMIT and self.change_x < 0
-                or self.right >= RIGHT_LIMIT and self.change_x > 0):
-=======
         if (self.left <= LEFT_LIMIT and self.walking == "L"
                 or self.right >= RIGHT_LIMIT and self.walking == "R"):
->>>>>>> parent of fb3a5b6... Update ctr_battle_arena.py
             self.change_x = 0
         if self.hit_cooldown == 0:    
             for enemy in self.enemies:
                 if self.collides_with_sprite(enemy):
                     self.take_damage(enemy)
                     self.hit_cooldown = 50
-<<<<<<< HEAD
-        if abs(self.change_x) > 0 and self.physics_engine.can_jump and (self.walking == "" or abs(self.change_x) > self.speed):
-            self.change_x /= FRICTION
-        if self.walking == "L" and self.change_x > -self.speed:
-            self.accelerate(x_accel=-self.accel)
-        elif self.walking == "R" and self.change_x < self.speed:
-            self.accelerate(x_accel=self.accel)
-=======
         if abs(self.change_x) > 0 and self.physics_engine.can_jump and self.walking == "":
             self.change_x /= FRICTION
         if self.walking == "L" and self.left > LEFT_LIMIT and self.change_x > -self.speed:
             self.change_x -= self.accel
         elif self.walking == "R" and self.right < RIGHT_LIMIT and self.change_x < self.speed:
             self.change_x += self.accel
->>>>>>> parent of fb3a5b6... Update ctr_battle_arena.py
         if self.hit_cooldown > 0:
             self.hit_cooldown -= 1
             
@@ -300,11 +256,7 @@ class Orc(Enemy):
             self.texture = self.textures[0]
         elif self.center_x > self.prey.center_x and self.change_x > -self.speed:
             self.change_x -= self.accel
-<<<<<<< HEAD
-            self.texture = self.textures[1]
-=======
             self.texture = self.textures[0]
->>>>>>> parent of fb3a5b6... Update ctr_battle_arena.py
         if (self.bottom + 10 < self.prey.bottom and self.physics_engine.can_jump()
                 and abs(self.center_x - self.prey.center_x) < 150):
             self.change_y = self.jump_height
