@@ -44,8 +44,25 @@ class GameView(arcade.View):
     def setup(self):
         for i in range(30):
             Wall(self.wall_list, i, 0.5, ":resources:images/tiles/grassMid.png")  
+        
+        Wall(self.wall_list, 4, 7, ":resources:images/tiles/grassCliffAlt_left.png")  
+        Wall(self.wall_list, 5, 7, ":resources:images/tiles/grassCliffAlt_right.png")
+        
+
+        Wall(self.wall_list, 12, 9, ":resources:images/tiles/grassHalf_left.png")  
+        Wall(self.wall_list, 13, 9, ":resources:images/tiles/grassHalf_mid.png")  
+        Wall(self.wall_list, 14, 9, ":resources:images/tiles/grassHalf_right.png")  
+        Wall(self.wall_list, 12, 10, ":resources:images/tiles/grass_sprout.png")
 
 
+        Wall(self.wall_list, 7 , 3, ":resources:images/tiles/planetLeft.png")
+        Wall(self.wall_list, 8 , 3, ":resources:images/tiles/planetRight.png") 
+        Wall(self.wall_list, 8 , 4, ":resources:images/tiles/rock.png")
+
+        for i in range(13,16):
+            Wall(self.wall_list, i , 2, ":resources:images/tiles/lavaTop_low.png")
+
+        Wall(self.wall_list, 0.5, 1.5, ":resources:images/tiles/doorClosed_mid.png") 
 
     def on_update(self, delta_time):
         # Call update on all sprites
