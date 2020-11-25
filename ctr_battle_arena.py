@@ -37,6 +37,7 @@ class GameView(arcade.View):
         self.player_sprite = Player(self.actor_list, self.wall_list, self.enemy_list)
         Orc(self.player_sprite, self.actor_list, self.enemy_list, self.wall_list)
         Dragon(self.player_sprite, self.actor_list, self.enemy_list, self.wall_list)
+        Goblin(self.player_sprite, self.actor_list, self.enemy_list, self.wall_list)
 
 
         for i in range(30):
@@ -197,8 +198,14 @@ class Player(Actor):
     """ Sprite for the player """
     def __init__(self, actor_list, wall_list, enemy_list):
         super().__init__(actor_list, wall_list)
-        self.textures.append(arcade.load_texture("images/Knight.png"))
-        self.textures.append(arcade.load_texture("images/Knight.png",
+        self.textures.append(arcade.load_texture("images/knight.png"))
+        self.textures.append(arcade.load_texture("images/knight.png",
+                                      flipped_horizontally=True))
+        self.textures.append(arcade.load_texture("images/knight_sword.png"))
+        self.textures.append(arcade.load_texture("images/knight_sword.png",
+                                      flipped_horizontally=True))
+        self.textures.append(arcade.load_texture("images/knight_bow.png"))
+        self.textures.append(arcade.load_texture("images/knight_bow.png",
                                       flipped_horizontally=True))
         self.texture = self.textures[0]
         self.scale = SPRITE_SCALING/4
@@ -238,6 +245,8 @@ class Player(Actor):
 
     def on_mouse_press(self, actor_list):
         self.swing_sword(actor_list)
+        self.texture = self.textures[3]
+
     
     def swing_sword(self, actor_list):
         if self.direction == "L":
@@ -309,9 +318,38 @@ class Orc(Enemy):
         self.textures.append(arcade.load_texture("images/orc.png",
                                       flipped_horizontally=True))
         self.texture = self.textures[0]
-        self.scale = SPRITE_SCALING/5
+        self.scale = SPRITE_SCALING/3.5
 
         self.position = [0, 4 * GRID_PIXEL_SIZE]
+        self.health = 100
+        self.speed = 2
+        self.accel = 0.1
+        self.jump_height = 10
+        self.damage = 1
+        self.knockback = 10
+        self.prey = player
+        
+    def update(self):
+        if self.center_x < self.prey.center_x and self.change_x < self.speed:
+            self.change_x += self.accel
+            self.texture = self.textures[0]
+        elif self.center_x > self.prey.center_x and self.change_x > -self.speed:
+            self.change_x -= self.accel
+            self.texture = self.textures[1]
+        if (self.bottom + 10 < self.prey.bottom and self.physics_engine.can_jump()
+                and abs(self.center_x - self.prey.center_x) < 150):
+            self.change_y = self.jump_height
+
+class Goblin(Enemy):
+    def __init__(self, player, actor_list, enemy_list, wall_list):
+        super().__init__(player, actor_list, enemy_list, wall_list)
+        self.textures.append(arcade.load_texture("images/goblin.png"))
+        self.textures.append(arcade.load_texture("images/goblin.png",
+                                      flipped_horizontally=True))
+        self.texture = self.textures[0]
+        self.scale = SPRITE_SCALING/3.5
+
+        self.position = [16, 4 * GRID_PIXEL_SIZE]
         self.health = 100
         self.speed = 2
         self.accel = 0.1
