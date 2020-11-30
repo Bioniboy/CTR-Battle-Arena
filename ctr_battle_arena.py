@@ -41,10 +41,10 @@ class GameView(arcade.View):
 
 
         for i in range(30):
-            Wall(self.wall_list, i, 0.5, ":resources:images/tiles/grassMid.png")      
+            Wall(self.wall_list, i, -0.5, ":resources:images/tiles/grassMid.png")      
 
-
-        arcade.set_background_color(arcade.color.SKY_BLUE)
+        self.background = arcade.load_texture("images/castle_doors.png")
+        arcade.set_background_color = None
 
     def on_update(self, delta_time):
         # Call update on all sprites
@@ -78,6 +78,11 @@ class GameView(arcade.View):
         """ Render the screen. """
         arcade.start_render()
 
+        # Draw the background texture
+        arcade.draw_lrwh_rectangle_textured(0, -SCREEN_WIDTH * .12,
+                                            SCREEN_WIDTH, SCREEN_HEIGHT * 1.25,
+                                            self.background)
+
         # Draw the sprites.
         self.wall_list.draw()
         self.actor_list.draw()
@@ -87,7 +92,8 @@ class GameView(arcade.View):
         output = f"Health: {health}"
         arcade.draw_text(output, 10, 20,
                          arcade.color.WHITE, 14)
-
+    
+    
 class InstructionView(arcade.View):
     """ View to show instructions """
 
@@ -322,7 +328,7 @@ class Orc(Enemy):
 
         self.position = [0, 4 * GRID_PIXEL_SIZE]
         self.health = 100
-        self.speed = 2
+        self.speed = 1.5
         self.accel = 0.1
         self.jump_height = 10
         self.damage = 1
@@ -350,7 +356,7 @@ class Goblin(Enemy):
         self.scale = SPRITE_SCALING/3.5
 
         self.position = [16, 4 * GRID_PIXEL_SIZE]
-        self.health = 100
+        self.health = 50
         self.speed = 2
         self.accel = 0.1
         self.jump_height = 10
