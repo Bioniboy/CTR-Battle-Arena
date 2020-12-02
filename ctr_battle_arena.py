@@ -75,6 +75,9 @@ class GameView(arcade.View):
     
     def on_mouse_press(self, _x, _y, button, _modifiers):
         self.player_sprite.on_mouse_press(self.actor_list, button)
+    
+    def on_mouse_scroll(self, _x, _y, _scroll_x, _scroll_y):
+        self.player_sprite.change_weapon()
 
     def on_draw(self):
         """ Render the screen. """
@@ -228,6 +231,7 @@ class Player(Actor):
         super().__init__(actor_list, wall_list)
         self.add_texture("images/knight.png", "idle")
         self.add_texture("images/knight_sword.png", "sword")
+        self.add_texture("images/knight_bow.png", "bow")
         self.scale = SPRITE_SCALING/4
         self.position = [(RIGHT_LIMIT + LEFT_LIMIT)/2, 4 * GRID_PIXEL_SIZE]
         self.enemies = enemy_list
@@ -239,6 +243,7 @@ class Player(Actor):
         self.knockback = 10
         self.walking = False
         self.direction = "L"
+        self.weapon = "sword"
         self.hit_cooldown = 0
         self.texture = self.textures["idle"][self.direction]
         self.coins = 0
@@ -266,7 +271,12 @@ class Player(Actor):
             self.change_y *= 0.5
 
     def on_mouse_press(self, actor_list, button):
-        self.swing_sword(actor_list)
+        if button == arcade.MOUSE_BUTTON_LEFT:
+            if self.weapon == "sword":
+                self.swing_sword(actor_list)
+            elif self.weapon == "bow":
+                self.charge_bow()
+
     
     def swing_sword(self, actor_list):
         if self.direction == "L":
@@ -278,6 +288,15 @@ class Player(Actor):
         for enemy in self.enemies:
             if swing.collides_with_sprite(enemy):
                     enemy.take_damage(self)
+    
+    def charge_bow(self):
+        self.texture = self.textures["bow"][self.direction]
+
+    def change_weapon(self):
+        if self.weapon == "sword":
+            self.weapon = "bow"
+        else:
+            self.weapon = "sword"
     
     def update(self):
         if (self.left <= LEFT_LIMIT and self.change_x < 0
@@ -340,7 +359,7 @@ class Orc(Enemy):
         self.scale = SPRITE_SCALING/5
 
         self.position = [0, 4 * GRID_PIXEL_SIZE]
-        self.health = 1
+        self.health = 10
         self.speed = 1.5
         self.accel = 0.1
         self.jump_height = 10
@@ -358,8 +377,7 @@ class Orc(Enemy):
         if (self.bottom + 10 < self.prey.bottom and self.physics_engine.can_jump()
                 and abs(self.center_x - self.prey.center_x) < 150):
             self.change_y = self.jump_height
-        
-            
+
 
 class Goblin(Enemy):
     def __init__(self, player, actor_list, enemy_list, wall_list):
@@ -397,7 +415,7 @@ class Dragon(Enemy):
         self.scale = SPRITE_SCALING/1.5
 
         self.position = [0, 4 * GRID_PIXEL_SIZE]
-        self.health = 1
+        self.health = 30
         self.speed = 5
         self.accel = 0.1
         self.jump_height = 10
