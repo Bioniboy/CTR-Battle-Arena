@@ -62,6 +62,8 @@ class GameView(arcade.View):
             if actor.physics_engine is not None:
                 actor.physics_engine.update()
             if not actor.is_alive():
+                if actor in self.enemy_list:
+                    self.player_sprite.coins += actor.value
                 actor.kill()
 
     def on_key_press(self, key, modifiers):
@@ -215,8 +217,6 @@ class Actor(arcade.Sprite):
         y_distance = self.center_y - source.center_y
         angle = math.atan(x_distance/y_distance)
         self.accelerate(math.sin(angle) * source.knockback, math.sin(angle) * source.knockback)
-        if self.health <= 0:
-           source.coins += 10
     
     def accelerate(self, x_accel=None, y_accel=None):
         if (x_accel is not None and (self.left > LEFT_LIMIT and x_accel < 0
@@ -277,7 +277,6 @@ class Player(Actor):
             elif self.weapon == "bow":
                 self.charge_bow()
 
-    
     def swing_sword(self, actor_list):
         if self.direction == "L":
             x_pos = self.left - 20
@@ -365,6 +364,7 @@ class Orc(Enemy):
         self.jump_height = 10
         self.damage = 4
         self.knockback = 10
+        self.value = 10
         self.prey = player
         
     def update(self):
@@ -393,6 +393,7 @@ class Goblin(Enemy):
         self.jump_height = 10
         self.damage = 2
         self.knockback = 10
+        self.value = 5
         self.prey = player
         
     def update(self):
@@ -422,6 +423,7 @@ class Dragon(Enemy):
         self.prey = player
         self.damage = 5
         self.knockback = 20
+        self.value = 20
 
     def update(self):
         if self.center_x < self.prey.center_x and self.change_x < self.speed:
