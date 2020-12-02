@@ -97,11 +97,11 @@ class GameView(arcade.View):
         # Put the text on the screen.
         health = self.player_sprite.health
         output = f"Health: {health}"
-        arcade.draw_text(output, 10, 620,
-                         arcade.color.WHITE, 14)
+        arcade.draw_text(output, 10, 970,
+                         arcade.color.RED, 14)
         coins = self.player_sprite.coins
         output = f"Coins: {coins}"
-        arcade.draw_text(output, 10, 590, arcade.color.WHITE, 14)
+        arcade.draw_text(output, 10, 940, arcade.color.YELLOW, 14)
 
     #def add_coins(self):
         #self.coins += 10
