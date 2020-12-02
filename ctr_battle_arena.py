@@ -4,8 +4,8 @@ import math
 
 SPRITE_SCALING = 0.5
 
-SCREEN_WIDTH = 1250
-SCREEN_HEIGHT = 700
+SCREEN_WIDTH = 1750
+SCREEN_HEIGHT = 1000
 SCREEN_TITLE = "CTR Battle Arena"
 SPRITE_PIXEL_SIZE = 128
 GRID_PIXEL_SIZE = (SPRITE_PIXEL_SIZE * SPRITE_SCALING)
@@ -24,7 +24,6 @@ class GameView(arcade.View):
 
     def __init__(self):
         super().__init__()
-
         # Sprite lists
         self.wall_list = arcade.SpriteList()
         self.player_list = arcade.SpriteList()
@@ -37,14 +36,16 @@ class GameView(arcade.View):
         self.player_sprite = Player(self.actor_list, self.wall_list, self.enemy_list)
         Orc(self.player_sprite, self.actor_list, self.enemy_list, self.wall_list)
         Dragon(self.player_sprite, self.actor_list, self.enemy_list, self.wall_list)
-        Goblin(self.player_sprite, self.actor_list, self.enemy_list, self.wall_list)
 
 
-        for i in range(30):
-            Wall(self.wall_list, i, 0.5, ":resources:images/tiles/grassMid.png")      
+        self.setup()    
 
 
         arcade.set_background_color(arcade.color.SKY_BLUE)
+    
+    def setup(self):
+        for i in range(30):
+            Wall(self.wall_list, i, 0.5, ":resources:images/tiles/grassMid.png") 
 
     def on_update(self, delta_time):
         # Call update on all sprites
@@ -71,8 +72,8 @@ class GameView(arcade.View):
     def on_key_release(self, key, modifiers):
         self.player_sprite.on_key_release(key)
     
-    def on_mouse_press(self, _x, _y, _button, _modifiers):
-        self.player_sprite.on_mouse_press(self.actor_list)
+    def on_mouse_press(self, _x, _y, button, _modifiers):
+        self.player_sprite.on_mouse_press(self.actor_list, button)
 
     def on_draw(self):
         """ Render the screen. """
@@ -167,6 +168,7 @@ class Actor(arcade.Sprite):
         self.health = None
         self.boundary_left = LEFT_LIMIT
         self.boundary_right = RIGHT_LIMIT
+        self.textures = {}
         # Make the sprite drawn and have physics applied
         actor_list.append(self)
         self.physics_engine = arcade.PhysicsEnginePlatformer(self, wall_list, gravity_constant=GRAVITY)
@@ -179,6 +181,9 @@ class Actor(arcade.Sprite):
 
     def is_alive(self):
         return self.health > 0
+    
+    def add_texture(self, img, name):
+        self.textures[name] = {"L": arcade.load_texture(img), "R": arcade.load_texture(img, flipped_horizontally=True)}
     
     def take_damage(self, source):
         self.health -= source.damage
@@ -198,16 +203,8 @@ class Player(Actor):
     """ Sprite for the player """
     def __init__(self, actor_list, wall_list, enemy_list):
         super().__init__(actor_list, wall_list)
-        self.textures.append(arcade.load_texture("images/knight.png"))
-        self.textures.append(arcade.load_texture("images/knight.png",
-                                      flipped_horizontally=True))
-        self.textures.append(arcade.load_texture("images/knight_sword.png"))
-        self.textures.append(arcade.load_texture("images/knight_sword.png",
-                                      flipped_horizontally=True))
-        self.textures.append(arcade.load_texture("images/knight_bow.png"))
-        self.textures.append(arcade.load_texture("images/knight_bow.png",
-                                      flipped_horizontally=True))
-        self.texture = self.textures[0]
+        self.add_texture("images/knight.png", "idle")
+        self.add_texture("images/knight_sword.png", "sword")
         self.scale = SPRITE_SCALING/4
         self.position = [(RIGHT_LIMIT + LEFT_LIMIT)/2, 4 * GRID_PIXEL_SIZE]
         self.enemies = enemy_list
@@ -220,6 +217,7 @@ class Player(Actor):
         self.walking = False
         self.direction = "L"
         self.hit_cooldown = 0
+        self.texture = self.textures["idle"][self.direction]
 
     def is_dead(self):
         return self.center_y < -5 * GRID_PIXEL_SIZE
@@ -230,11 +228,11 @@ class Player(Actor):
         elif key in [arcade.key.LEFT, arcade.key.A]:
             self.walking = True
             self.direction = "L"
-            self.texture = self.textures[0]
+            self.texture = self.textures["idle"][self.direction]
         elif key in [arcade.key.RIGHT, arcade.key.D] and self.right < RIGHT_LIMIT:
             self.walking = True
             self.direction = "R"
-            self.texture = self.textures[1]
+            self.texture = self.textures["idle"][self.direction]
 
     def on_key_release(self, key):
         if (key in [arcade.key.LEFT, arcade.key.A] and self.direction == "L"
@@ -243,16 +241,15 @@ class Player(Actor):
         if key in [arcade.key.UP, arcade.key.W, arcade.key.SPACE] and self.change_y > 0:
             self.change_y *= 0.5
 
-    def on_mouse_press(self, actor_list):
+    def on_mouse_press(self, actor_list, button):
         self.swing_sword(actor_list)
-        self.texture = self.textures[3]
-
     
     def swing_sword(self, actor_list):
         if self.direction == "L":
-            x_pos = self.left
+            x_pos = self.left - 20
         else:
-            x_pos = self.right
+            x_pos = self.right + 20
+        self.texture = self.textures["sword"][self.direction]
         swing = Swing(actor_list, x_pos, self.center_y, self.direction, self)
         for enemy in self.enemies:
             if swing.collides_with_sprite(enemy):
@@ -314,11 +311,9 @@ class Enemy(Actor):
 class Orc(Enemy):
     def __init__(self, player, actor_list, enemy_list, wall_list):
         super().__init__(player, actor_list, enemy_list, wall_list)
-        self.textures.append(arcade.load_texture("images/orc.png"))
-        self.textures.append(arcade.load_texture("images/orc.png",
-                                      flipped_horizontally=True))
-        self.texture = self.textures[0]
-        self.scale = SPRITE_SCALING/3.5
+        self.add_texture("images/orc.png", "idle")
+        self.texture = self.textures["idle"]["R"]
+        self.scale = SPRITE_SCALING/5
 
         self.position = [0, 4 * GRID_PIXEL_SIZE]
         self.health = 100
@@ -332,39 +327,10 @@ class Orc(Enemy):
     def update(self):
         if self.center_x < self.prey.center_x and self.change_x < self.speed:
             self.change_x += self.accel
-            self.texture = self.textures[0]
+            self.texture = self.textures["idle"]["R"]
         elif self.center_x > self.prey.center_x and self.change_x > -self.speed:
             self.change_x -= self.accel
-            self.texture = self.textures[1]
-        if (self.bottom + 10 < self.prey.bottom and self.physics_engine.can_jump()
-                and abs(self.center_x - self.prey.center_x) < 150):
-            self.change_y = self.jump_height
-
-class Goblin(Enemy):
-    def __init__(self, player, actor_list, enemy_list, wall_list):
-        super().__init__(player, actor_list, enemy_list, wall_list)
-        self.textures.append(arcade.load_texture("images/goblin.png"))
-        self.textures.append(arcade.load_texture("images/goblin.png",
-                                      flipped_horizontally=True))
-        self.texture = self.textures[0]
-        self.scale = SPRITE_SCALING/3.5
-
-        self.position = [16, 4 * GRID_PIXEL_SIZE]
-        self.health = 100
-        self.speed = 2
-        self.accel = 0.1
-        self.jump_height = 10
-        self.damage = 1
-        self.knockback = 10
-        self.prey = player
-        
-    def update(self):
-        if self.center_x < self.prey.center_x and self.change_x < self.speed:
-            self.change_x += self.accel
-            self.texture = self.textures[0]
-        elif self.center_x > self.prey.center_x and self.change_x > -self.speed:
-            self.change_x -= self.accel
-            self.texture = self.textures[1]
+            self.texture = self.textures["idle"]["L"]
         if (self.bottom + 10 < self.prey.bottom and self.physics_engine.can_jump()
                 and abs(self.center_x - self.prey.center_x) < 150):
             self.change_y = self.jump_height
@@ -373,10 +339,8 @@ class Dragon(Enemy):
     def __init__(self, player, actor_list, enemy_list, wall_list):
         super().__init__(player, actor_list, enemy_list, wall_list)
         self.physics_engine = arcade.PhysicsEnginePlatformer(self, wall_list, gravity_constant=0)
-        self.textures.append(arcade.load_texture("images/dragon.png"))
-        self.textures.append(arcade.load_texture("images/dragon.png",
-                                      flipped_horizontally=True))
-        self.texture = self.textures[0]
+        self.add_texture("images/dragon.png", "idle")
+        self.texture = self.textures["idle"]["R"]
         self.scale = SPRITE_SCALING/1.5
 
         self.position = [0, 4 * GRID_PIXEL_SIZE]
@@ -391,10 +355,10 @@ class Dragon(Enemy):
     def update(self):
         if self.center_x < self.prey.center_x and self.change_x < self.speed:
             self.change_x += self.accel
-            self.texture = self.textures[1]
+            self.texture = self.textures["idle"]["R"]
         elif self.center_x > self.prey.center_x and self.change_x > -self.speed:
             self.change_x -= self.accel
-            self.texture = self.textures[0]
+            self.texture = self.textures["idle"]["L"]
 
         if self.center_y < self.prey.center_y and self.change_y < self.speed:
             self.change_y += self.accel
