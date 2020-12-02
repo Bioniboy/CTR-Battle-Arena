@@ -39,6 +39,7 @@ class GameView(arcade.View):
 
         self.player_sprite = Player(self.actor_list, self.wall_list, self.enemy_list)
         Orc(self.player_sprite, self.actor_list, self.enemy_list, self.wall_list)
+        Goblin(self.player_sprite, self.actor_list, self.enemy_list, self.wall_list)
         Dragon(self.player_sprite, self.actor_list, self.enemy_list, self.wall_list)
 
         #self.coins = 0
@@ -363,7 +364,7 @@ class Orc(Enemy):
 class Goblin(Enemy):
     def __init__(self, player, actor_list, enemy_list, wall_list):
         super().__init__(player, actor_list, enemy_list, wall_list)
-        self.add_texture("images/orc.png", "idle")
+        self.add_texture("images/goblin.png", "idle")
         self.texture = self.textures["idle"]["R"]
         self.scale = SPRITE_SCALING/3.5
 
