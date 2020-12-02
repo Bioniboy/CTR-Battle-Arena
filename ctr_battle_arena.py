@@ -19,6 +19,7 @@ GRAVITY = .75 * SPRITE_SCALING
 FRICTION = 1.1
 
 
+
 class GameView(arcade.View):
     """ Main application class. """
 
@@ -37,15 +38,14 @@ class GameView(arcade.View):
         Orc(self.player_sprite, self.actor_list, self.enemy_list, self.wall_list)
         Dragon(self.player_sprite, self.actor_list, self.enemy_list, self.wall_list)
 
+        #self.coins = 0
 
-        self.setup()    
-
-
-        arcade.set_background_color(arcade.color.SKY_BLUE)
-    
-    def setup(self):
+    def setup(self):    
         for i in range(30):
-            Wall(self.wall_list, i, 0.5, ":resources:images/tiles/grassMid.png") 
+            Wall(self.wall_list, i, -0.5, ":resources:images/tiles/grassMid.png")      
+
+        self.background = arcade.load_texture("images/castle_doors.png")
+        arcade.set_background_color = None
 
     def on_update(self, delta_time):
         # Call update on all sprites
@@ -79,6 +79,11 @@ class GameView(arcade.View):
         """ Render the screen. """
         arcade.start_render()
 
+        # Draw the background texture
+        arcade.draw_lrwh_rectangle_textured(0, -SCREEN_WIDTH * .12,
+                                            SCREEN_WIDTH, SCREEN_HEIGHT * 1.25,
+                                            self.background)
+
         # Draw the sprites.
         self.wall_list.draw()
         self.actor_list.draw()
@@ -86,9 +91,16 @@ class GameView(arcade.View):
         # Put the text on the screen.
         health = self.player_sprite.health
         output = f"Health: {health}"
-        arcade.draw_text(output, 10, 20,
+        arcade.draw_text(output, 10, 620,
                          arcade.color.WHITE, 14)
+        coins = self.player_sprite.coins
+        output = f"Coins: {coins}"
+        arcade.draw_text(output, 10, 590, arcade.color.WHITE, 14)
 
+    #def add_coins(self):
+        #self.coins += 10
+    
+    
 class InstructionView(arcade.View):
     """ View to show instructions """
 
@@ -152,6 +164,12 @@ class UpgradeView(arcade.View):
                          arcade.color.BLACK,
                          font_size=20,
                          anchor_x="center")
+        arcade.draw_text("Press 1 to increase health by 50",
+                         SCREEN_WIDTH / 2,
+                         SCREEN_HEIGHT / 2-60,
+                         arcade.color.BLACK,
+                         font_size=20,
+                         anchor_x="center")
 
     def on_key_press(self, key, _modifiers):
         if key == arcade.key.ESCAPE:   # resume game
@@ -160,6 +178,8 @@ class UpgradeView(arcade.View):
         elif key == arcade.key.ENTER:  # reset game
             game = GameView()
             self.window.show_view(game)
+        elif key == arcade.key.KEY_1:
+            self.game_view.player_sprite.health += 50
 
 class Actor(arcade.Sprite):
     """ All dynamic sprites inherit this """
@@ -191,6 +211,8 @@ class Actor(arcade.Sprite):
         y_distance = self.center_y - source.center_y
         angle = math.atan(x_distance/y_distance)
         self.accelerate(math.sin(angle) * source.knockback, math.sin(angle) * source.knockback)
+        if self.health <= 0:
+           self.prey.coins += 10
     
     def accelerate(self, x_accel=None, y_accel=None):
         if (x_accel is not None and (self.left > LEFT_LIMIT and x_accel < 0
@@ -218,6 +240,7 @@ class Player(Actor):
         self.direction = "L"
         self.hit_cooldown = 0
         self.texture = self.textures["idle"][self.direction]
+        self.coins = 0
 
     def is_dead(self):
         return self.center_y < -5 * GRID_PIXEL_SIZE
@@ -316,11 +339,42 @@ class Orc(Enemy):
         self.scale = SPRITE_SCALING/5
 
         self.position = [0, 4 * GRID_PIXEL_SIZE]
-        self.health = 100
+        self.health = 1
+        self.speed = 1.5
+        self.accel = 0.1
+        self.jump_height = 10
+        self.damage = 4
+        self.knockback = 10
+        self.prey = player
+        
+    def update(self):
+        if self.center_x < self.prey.center_x and self.change_x < self.speed:
+            self.change_x += self.accel
+            self.texture = self.textures["idle"]["R"]
+        elif self.center_x > self.prey.center_x and self.change_x > -self.speed:
+            self.change_x -= self.accel
+            self.texture = self.textures["idle"]["L"]
+        if (self.bottom + 10 < self.prey.bottom and self.physics_engine.can_jump()
+                and abs(self.center_x - self.prey.center_x) < 150):
+            self.change_y = self.jump_height
+        
+            
+
+class Goblin(Enemy):
+    def __init__(self, player, actor_list, enemy_list, wall_list):
+        super().__init__(player, actor_list, enemy_list, wall_list)
+        self.textures.append(arcade.load_texture("images/goblin.png"))
+        self.textures.append(arcade.load_texture("images/goblin.png",
+                                      flipped_horizontally=True))
+        self.texture = self.textures[0]
+        self.scale = SPRITE_SCALING/3.5
+
+        self.position = [16, 4 * GRID_PIXEL_SIZE]
+        self.health = 5
         self.speed = 2
         self.accel = 0.1
         self.jump_height = 10
-        self.damage = 1
+        self.damage = 2
         self.knockback = 10
         self.prey = player
         
@@ -344,7 +398,7 @@ class Dragon(Enemy):
         self.scale = SPRITE_SCALING/1.5
 
         self.position = [0, 4 * GRID_PIXEL_SIZE]
-        self.health = 100
+        self.health = 1
         self.speed = 5
         self.accel = 0.1
         self.jump_height = 10
