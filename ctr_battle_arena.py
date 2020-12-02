@@ -30,6 +30,9 @@ class GameView(arcade.View):
         self.player_list = arcade.SpriteList()
         self.actor_list = arcade.SpriteList()
         self.enemy_list = arcade.SpriteList()
+        self.background = arcade.load_texture("images/castle_doors.png")
+        arcade.set_background_color = None
+        self.setup()
 
         # List of physics engines, one per actor; allows for multiple actors
         self.physics_engine = {}
@@ -43,9 +46,6 @@ class GameView(arcade.View):
     def setup(self):    
         for i in range(30):
             Wall(self.wall_list, i, -0.5, ":resources:images/tiles/grassMid.png")      
-
-        self.background = arcade.load_texture("images/castle_doors.png")
-        arcade.set_background_color = None
 
     def on_update(self, delta_time):
         # Call update on all sprites
@@ -212,7 +212,7 @@ class Actor(arcade.Sprite):
         angle = math.atan(x_distance/y_distance)
         self.accelerate(math.sin(angle) * source.knockback, math.sin(angle) * source.knockback)
         if self.health <= 0:
-           self.prey.coins += 10
+           source.coins += 10
     
     def accelerate(self, x_accel=None, y_accel=None):
         if (x_accel is not None and (self.left > LEFT_LIMIT and x_accel < 0
@@ -363,10 +363,8 @@ class Orc(Enemy):
 class Goblin(Enemy):
     def __init__(self, player, actor_list, enemy_list, wall_list):
         super().__init__(player, actor_list, enemy_list, wall_list)
-        self.textures.append(arcade.load_texture("images/goblin.png"))
-        self.textures.append(arcade.load_texture("images/goblin.png",
-                                      flipped_horizontally=True))
-        self.texture = self.textures[0]
+        self.add_texture("images/orc.png", "idle")
+        self.texture = self.textures["idle"]["R"]
         self.scale = SPRITE_SCALING/3.5
 
         self.position = [16, 4 * GRID_PIXEL_SIZE]
