@@ -355,7 +355,7 @@ class Orc(Enemy):
         super().__init__(player, actor_list, enemy_list, wall_list)
         self.add_texture("images/orc.png", "idle")
         self.texture = self.textures["idle"]["R"]
-        self.scale = SPRITE_SCALING/5
+        self.scale = SPRITE_SCALING/3.25
 
         self.position = [0, 4 * GRID_PIXEL_SIZE]
         self.health = 10
@@ -384,7 +384,7 @@ class Goblin(Enemy):
         super().__init__(player, actor_list, enemy_list, wall_list)
         self.add_texture("images/goblin.png", "idle")
         self.texture = self.textures["idle"]["R"]
-        self.scale = SPRITE_SCALING/3.5
+        self.scale = SPRITE_SCALING/4
 
         self.position = [16, 4 * GRID_PIXEL_SIZE]
         self.health = 5
