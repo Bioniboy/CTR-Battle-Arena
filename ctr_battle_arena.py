@@ -1,6 +1,7 @@
 import arcade
 import images
 import math
+import random
 
 SPRITE_SCALING = 0.5
 
@@ -46,7 +47,12 @@ class GameView(arcade.View):
 
     def setup(self):    
         for i in range(30):
-            Wall(self.wall_list, i, -0.5, ":resources:images/tiles/grassMid.png")      
+            Wall(self.wall_list, i, -0.5, ":resources:images/tiles/grassMid.png")
+        for i in range(4):
+            Wall(self.wall_list, i, 2.9, "images/floor.png")
+        for i in range(8, 30):
+            Wall(self.wall_list, i, 2.9, "images/floor.png")
+        Wall(self.wall_list, 5.6, 1.5, "images/floor.png")
 
     def on_update(self, delta_time):
         # Call update on all sprites
@@ -77,6 +83,7 @@ class GameView(arcade.View):
     
     def on_mouse_press(self, _x, _y, button, _modifiers):
         self.player_sprite.on_mouse_press(self.actor_list, button)
+        print(_x, _y)
     
     def on_mouse_scroll(self, _x, _y, _scroll_x, _scroll_y):
         self.player_sprite.change_weapon()
@@ -233,7 +240,7 @@ class Player(Actor):
         self.add_texture("images/knight_sword.png", "sword")
         self.add_texture("images/knight_bow.png", "bow")
         self.scale = SPRITE_SCALING/4
-        self.position = [(RIGHT_LIMIT + LEFT_LIMIT)/2, 4 * GRID_PIXEL_SIZE]
+        self.position = [216, 0]
         self.enemies = enemy_list
         self.health = 100
         self.speed = 5
@@ -283,7 +290,7 @@ class Player(Actor):
         else:
             x_pos = self.right + 20
         self.texture = self.textures["sword"][self.direction]
-        swing = Swing(actor_list, x_pos, self.center_y, self.direction, self)
+        swing = Swing(actor_list, x_pos, self.center_y, self.direction)
         for enemy in self.enemies:
             if swing.collides_with_sprite(enemy):
                     enemy.take_damage(self)
@@ -317,14 +324,13 @@ class Player(Actor):
 
 
 class Swing(arcade.Sprite):
-    def __init__(self, actor_list, x_pos, y_pos, direction, source):
+    def __init__(self, actor_list, x_pos, y_pos, direction):
         super().__init__()
         actor_list.append(self)
         self.health = 10
         self.physics_engine = None
         self.position = [x_pos, y_pos]
         self.scale = 1.5
-        self.source = source
         if direction == "L":
             self.texture = arcade.load_texture("images/swing.png")
         else:
@@ -357,7 +363,7 @@ class Orc(Enemy):
         self.texture = self.textures["idle"]["R"]
         self.scale = SPRITE_SCALING/3.25
 
-        self.position = [0, 4 * GRID_PIXEL_SIZE]
+        self.position = random.choice([[800, 214], [1530, 214], [1230, 0]])
         self.health = 10
         self.speed = 1.5
         self.accel = 0.1
@@ -386,7 +392,7 @@ class Goblin(Enemy):
         self.texture = self.textures["idle"]["R"]
         self.scale = SPRITE_SCALING/4
 
-        self.position = [16, 4 * GRID_PIXEL_SIZE]
+        self.position = random.choice([[800, 214], [1530, 214], [1230, 0]])
         self.health = 5
         self.speed = 2
         self.accel = 0.1
@@ -415,7 +421,7 @@ class Dragon(Enemy):
         self.texture = self.textures["idle"]["R"]
         self.scale = SPRITE_SCALING/1.5
 
-        self.position = [0, 4 * GRID_PIXEL_SIZE]
+        self.position = random.choice([[451, 931], [1296, 931]])
         self.health = 30
         self.speed = 5
         self.accel = 0.1
