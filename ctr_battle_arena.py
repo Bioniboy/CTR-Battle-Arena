@@ -46,6 +46,7 @@ class GameView(arcade.View):
         #self.coins = 0
 
     def setup(self):    
+<<<<<<< Updated upstream
         for i in range(30):
             Wall(self.wall_list, i, -0.5, ":resources:images/tiles/grassMid.png")
         for i in range(4):
@@ -53,6 +54,14 @@ class GameView(arcade.View):
         for i in range(8, 30):
             Wall(self.wall_list, i, 2.9, "images/floor.png")
         Wall(self.wall_list, 5.6, 1.5, "images/floor.png")
+=======
+        for i in range(50):
+            Wall(self.wall_list, i, -0.5, ":resources:images/tiles/grassMid.png")
+            Wall(self.wall_list, -1.5, i, ":resources:images/tiles/grassMid.png")
+            Wall(self.wall_list, 30, i, ":resources:images/tiles/grassMid.png")
+
+            
+>>>>>>> Stashed changes
 
     def on_update(self, delta_time):
         # Call update on all sprites
@@ -363,8 +372,13 @@ class Orc(Enemy):
         self.texture = self.textures["idle"]["R"]
         self.scale = SPRITE_SCALING/3.25
 
+<<<<<<< Updated upstream
         self.position = random.choice([[800, 214], [1530, 214], [1230, 0]])
         self.health = 10
+=======
+        self.position = [0, 4 * GRID_PIXEL_SIZE]
+        self.health = 100
+>>>>>>> Stashed changes
         self.speed = 1.5
         self.accel = 0.1
         self.jump_height = 10
