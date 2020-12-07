@@ -46,11 +46,18 @@ class GameView(arcade.View):
         #self.coins = 0
 
     def setup(self):    
-        for i in range(4):
-            Wall(self.wall_list, i, 2.9, "images/floor.png")
-        for i in range(8, 30):
+        for i in list(range(4)) + list(range(8, 30)):
             Wall(self.wall_list, i, 2.9, "images/floor.png")
         Wall(self.wall_list, 5.6, 1.5, "images/floor.png")
+
+        for i in list(range(9)) + list(range(14, 20)) + list(range(22, 30)):
+            Wall(self.wall_list, i, 6.15, "images/floor.png")
+        Wall(self.wall_list, 10, 4.75, "images/floor.png")
+
+        for i in list(range(5, 14)) + list(range(17, 26)):
+            Wall(self.wall_list, i, 9.4, "images/floor.png")
+        Wall(self.wall_list, 3, 8, "images/floor.png")
+
         for i in range(50):
             Wall(self.wall_list, i, -0.5, ":resources:images/tiles/grassMid.png")
             Wall(self.wall_list, -1.5, i, ":resources:images/tiles/grassMid.png")
@@ -106,7 +113,7 @@ class GameView(arcade.View):
         self.actor_list.draw()
 
         # Put the text on the screen.
-        health = self.player_sprite.health
+        health = int(self.player_sprite.health)
         output = f"Health: {health}"
         arcade.draw_text(output, 10, 970,
                          arcade.color.RED, 14)
