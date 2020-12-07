@@ -28,6 +28,7 @@ class GameView(arcade.View):
         super().__init__()
         # Sprite lists
         self.wall_list = arcade.SpriteList()
+        self.border_list = arcade.SpriteList()
         self.player_list = arcade.SpriteList()
         self.actor_list = arcade.SpriteList()
         self.enemy_list = arcade.SpriteList()
@@ -41,27 +42,26 @@ class GameView(arcade.View):
         self.player_sprite = Player(self.actor_list, self.wall_list, self.enemy_list)
         Orc(self.player_sprite, self.actor_list, self.enemy_list, self.wall_list)
         Goblin(self.player_sprite, self.actor_list, self.enemy_list, self.wall_list)
-        Dragon(self.player_sprite, self.actor_list, self.enemy_list, self.wall_list)
+        Dragon(self.player_sprite, self.actor_list, self.enemy_list, self.border_list)
 
         #self.coins = 0
 
     def setup(self):    
-<<<<<<< Updated upstream
-        for i in range(30):
-            Wall(self.wall_list, i, -0.5, ":resources:images/tiles/grassMid.png")
         for i in range(4):
             Wall(self.wall_list, i, 2.9, "images/floor.png")
         for i in range(8, 30):
             Wall(self.wall_list, i, 2.9, "images/floor.png")
         Wall(self.wall_list, 5.6, 1.5, "images/floor.png")
-=======
+        
+        #Create Border
         for i in range(50):
-            Wall(self.wall_list, i, -0.5, ":resources:images/tiles/grassMid.png")
-            Wall(self.wall_list, -1.5, i, ":resources:images/tiles/grassMid.png")
-            Wall(self.wall_list, 30, i, ":resources:images/tiles/grassMid.png")
+            Wall(self.border_list, (i -10), -0.5, ":resources:images/tiles/grassMid.png")
+            Wall(self.border_list, -5, i, ":resources:images/tiles/grassMid.png")
+            Wall(self.border_list, 35, i, ":resources:images/tiles/grassMid.png")
+            Wall(self.border_list, (i - 10), 20, ":resources:images/tiles/grassMid.png")
+        self.wall_list.extend(self.border_list)
 
             
->>>>>>> Stashed changes
 
     def on_update(self, delta_time):
         # Call update on all sprites
@@ -110,6 +110,14 @@ class GameView(arcade.View):
         self.wall_list.draw()
         self.actor_list.draw()
 
+        # Draw health
+        for i in self.actor_list:
+            actor_health = i.health
+            output = f"{actor_health}"
+            x = i.center_x - 10
+            y = i.center_y + 20
+            arcade.draw_text(output, x, y, arcade.color.RED, 14)
+
         # Put the text on the screen.
         health = self.player_sprite.health
         output = f"Health: {health}"
@@ -118,6 +126,7 @@ class GameView(arcade.View):
         coins = self.player_sprite.coins
         output = f"Coins: {coins}"
         arcade.draw_text(output, 10, 940, arcade.color.YELLOW, 14)
+
 
     #def add_coins(self):
         #self.coins += 10
@@ -372,13 +381,8 @@ class Orc(Enemy):
         self.texture = self.textures["idle"]["R"]
         self.scale = SPRITE_SCALING/3.25
 
-<<<<<<< Updated upstream
         self.position = random.choice([[800, 214], [1530, 214], [1230, 0]])
-        self.health = 10
-=======
-        self.position = [0, 4 * GRID_PIXEL_SIZE]
-        self.health = 100
->>>>>>> Stashed changes
+        self.health = 50
         self.speed = 1.5
         self.accel = 0.1
         self.jump_height = 10
@@ -397,6 +401,13 @@ class Orc(Enemy):
         if (self.bottom + 10 < self.prey.bottom and self.physics_engine.can_jump()
                 and abs(self.center_x - self.prey.center_x) < 150):
             self.change_y = self.jump_height
+
+    def on_draw(self):
+        orc_health = self.health
+        output = f"Health: {orc_health}"
+        arcade.draw_text(output, 10, 900, arcade.color.RED, 50)
+
+
 
 
 class Goblin(Enemy):
