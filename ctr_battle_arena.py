@@ -12,6 +12,11 @@ SPRITE_PIXEL_SIZE = 128
 GRID_PIXEL_SIZE = (SPRITE_PIXEL_SIZE * SPRITE_SCALING)
 LEFT_LIMIT = 0
 RIGHT_LIMIT = SCREEN_WIDTH
+DOORS = [[1230, 0],
+        [800, 214], [1530, 214],
+        [365, 420], [1100, 420],
+        [650, 620], [1380, 620]]
+CRACKS = [[451, 931], [1296, 931]]
 
 # Physics
 MOVEMENT_SPEED = 10 * SPRITE_SCALING
@@ -28,6 +33,7 @@ class GameView(arcade.View):
         super().__init__()
         # Sprite lists
         self.wall_list = arcade.SpriteList()
+        self.border_list = arcade.SpriteList()
         self.player_list = arcade.SpriteList()
         self.actor_list = arcade.SpriteList()
         self.enemy_list = arcade.SpriteList()
@@ -39,9 +45,9 @@ class GameView(arcade.View):
         self.physics_engine = {}
 
         self.player_sprite = Player(self.actor_list, self.wall_list, self.enemy_list)
-        Orc(self.player_sprite, self.actor_list, self.enemy_list, self.wall_list)
-        Goblin(self.player_sprite, self.actor_list, self.enemy_list, self.wall_list)
-        Dragon(self.player_sprite, self.actor_list, self.enemy_list, self.wall_list)
+        self.enemy_cooldown = 0
+        self.enemy_count = 1.0
+        
 
         #self.coins = 0
 
@@ -58,12 +64,13 @@ class GameView(arcade.View):
             Wall(self.wall_list, i, 9.4, "images/floor.png")
         Wall(self.wall_list, 3, 8, "images/floor.png")
 
+        #Create Border
         for i in range(50):
-            Wall(self.wall_list, i, -0.5, ":resources:images/tiles/grassMid.png")
-            Wall(self.wall_list, -1.5, i, ":resources:images/tiles/grassMid.png")
-            Wall(self.wall_list, 30, i, ":resources:images/tiles/grassMid.png")
-
-            
+            Wall(self.border_list, (i -10), -0.5, ":resources:images/tiles/grassMid.png")
+            Wall(self.border_list, -5, i, ":resources:images/tiles/grassMid.png")
+            Wall(self.border_list, 35, i, ":resources:images/tiles/grassMid.png")
+            Wall(self.border_list, (i - 10), 20, ":resources:images/tiles/grassMid.png")
+        self.wall_list.extend(self.border_list) 
 
     def on_update(self, delta_time):
         # Call update on all sprites
@@ -82,6 +89,20 @@ class GameView(arcade.View):
                 if actor in self.enemy_list:
                     self.player_sprite.coins += actor.value
                 actor.kill()
+        
+        if self.enemy_cooldown > 0:
+            self.enemy_cooldown -= 1
+        else:
+            self.enemy_cooldown = 500
+            self.enemy_count += 0.1
+            for _ in range(int(self.enemy_count)):
+                enemy_choice = random.randint(1, 100)
+                if enemy_choice < 40:
+                    Orc(self.player_sprite, self.actor_list, self.enemy_list, self.wall_list)
+                elif 40 <= enemy_choice < 80:
+                    Goblin(self.player_sprite, self.actor_list, self.enemy_list, self.wall_list)
+                else:
+                    Dragon(self.player_sprite, self.actor_list, self.enemy_list, self.border_list) 
 
     def on_key_press(self, key, modifiers):
         self.player_sprite.on_key_press(key)
@@ -112,6 +133,14 @@ class GameView(arcade.View):
         self.wall_list.draw()
         self.actor_list.draw()
 
+        # Draw health
+        for actor in self.actor_list:
+            actor_health = int(actor.health)
+            output = f"{actor_health}"
+            x = actor.center_x - 10
+            y = actor.center_y + 20
+            arcade.draw_text(output, x, y, arcade.color.RED, 14)
+
         # Put the text on the screen.
         health = int(self.player_sprite.health)
         output = f"Health: {health}"
@@ -120,6 +149,7 @@ class GameView(arcade.View):
         coins = self.player_sprite.coins
         output = f"Coins: {coins}"
         arcade.draw_text(output, 10, 940, arcade.color.YELLOW, 14)
+
 
     #def add_coins(self):
         #self.coins += 10
@@ -374,10 +404,10 @@ class Orc(Enemy):
         self.texture = self.textures["idle"]["R"]
         self.scale = SPRITE_SCALING/3.25
 
-        self.position = random.choice([[800, 214], [1530, 214], [1230, 0]])
-        self.health = 100
+        self.position = random.choice(DOORS)
+        self.health = 50
         self.speed = 1.5
-        self.accel = 0.1
+        self.accel = 0.3
         self.jump_height = 10
         self.damage = 4
         self.knockback = 10
@@ -403,6 +433,10 @@ class Orc(Enemy):
             self.health *= 1.1
             self.damage *= 1.1
         
+    def on_draw(self):
+        orc_health = int(self.health)
+        output = f"Health: {orc_health}"
+        arcade.draw_text(output, 10, 900, arcade.color.RED, 50)
 
 class Goblin(Enemy):
     def __init__(self, player, actor_list, enemy_list, wall_list):
@@ -411,10 +445,10 @@ class Goblin(Enemy):
         self.texture = self.textures["idle"]["R"]
         self.scale = SPRITE_SCALING/4
 
-        self.position = random.choice([[800, 214], [1530, 214], [1230, 0]])
+        self.position = random.choice(DOORS)
         self.health = 5
         self.speed = 2
-        self.accel = 0.1
+        self.accel = 0.2
         self.jump_height = 10
         self.damage = 2
         self.knockback = 10
@@ -448,7 +482,7 @@ class Dragon(Enemy):
         self.texture = self.textures["idle"]["R"]
         self.scale = SPRITE_SCALING/1.5
 
-        self.position = random.choice([[451, 931], [1296, 931]])
+        self.position = random.choice(CRACKS)
         self.health = 30
         self.speed = 5
         self.accel = 0.1
