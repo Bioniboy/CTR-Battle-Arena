@@ -116,9 +116,6 @@ class GameView(arcade.View):
     def on_mouse_press(self, _x, _y, button, _modifiers):
         self.player_sprite.on_mouse_press(self.actor_list, button)
         print(_x, _y)
-    
-    def on_mouse_scroll(self, _x, _y, _scroll_x, _scroll_y):
-        self.player_sprite.change_weapon()
 
     def on_draw(self):
         """ Render the screen. """
@@ -291,10 +288,10 @@ class Player(Actor):
         self.knockback = 10
         self.walking = False
         self.direction = "L"
-        self.weapon = "sword"
         self.hit_cooldown = 0
         self.texture = self.textures["idle"][self.direction]
         self.coins = 0
+        self.arrows = []
 
     def is_dead(self):
         return self.center_y < -5 * GRID_PIXEL_SIZE
@@ -320,10 +317,9 @@ class Player(Actor):
 
     def on_mouse_press(self, actor_list, button):
         if button == arcade.MOUSE_BUTTON_LEFT:
-            if self.weapon == "sword":
-                self.swing_sword(actor_list)
-            elif self.weapon == "bow":
-                self.charge_bow()
+            self.swing_sword(actor_list)
+        if button == arcade.MOUSE_BUTTON_RIGHT:
+            self.fire_bow(actor_list)
 
     def swing_sword(self, actor_list):
         if self.direction == "L":
@@ -331,19 +327,18 @@ class Player(Actor):
         else:
             x_pos = self.right + 20
         self.texture = self.textures["sword"][self.direction]
-        swing = Swing(actor_list, x_pos, self.center_y, self.direction)
+        swing = Swing(actor_list, [x_pos, self.center_y], self.direction)
         for enemy in self.enemies:
             if swing.collides_with_sprite(enemy):
                     enemy.take_damage(self)
     
-    def charge_bow(self):
-        self.texture = self.textures["bow"][self.direction]
-
-    def change_weapon(self):
-        if self.weapon == "sword":
-            self.weapon = "bow"
+    def fire_bow(self, actor_list):
+        if self.direction == "L":
+            x_pos = self.left - 20
         else:
-            self.weapon = "sword"
+            x_pos = self.right + 20
+        self.texture = self.textures["bow"][self.direction]
+        self.arrows.append(Arrow(actor_list, [x_pos, self.center_y + 10], self.direction))
     
     def update(self):
         if (self.left <= LEFT_LIMIT and self.change_x < 0
@@ -365,12 +360,12 @@ class Player(Actor):
 
 
 class Swing(arcade.Sprite):
-    def __init__(self, actor_list, x_pos, y_pos, direction):
+    def __init__(self, actor_list, pos, direction):
         super().__init__()
         actor_list.append(self)
         self.health = 10
         self.physics_engine = None
-        self.position = [x_pos, y_pos]
+        self.position = pos
         self.scale = 1.5
         if direction == "L":
             self.texture = arcade.load_texture("images/swing.png")
@@ -383,6 +378,28 @@ class Swing(arcade.Sprite):
     
     def update(self):
         self.health -= 1
+
+class Arrow(arcade.Sprite):
+    def __init__(self, actor_list, pos, direction):
+        super().__init__()
+        actor_list.append(self)
+        self.physics_engine = arcade.PhysicsEnginePlatformer(self, arcade.SpriteList(), gravity_constant=0)
+        self.health = 1
+        if direction == "L":
+            self.texture = arcade.load_texture("images/arrow.png")
+            self.change_x = -10
+        else:
+            self.change_x = 10
+            self.texture = arcade.load_texture("images/arrow.png",
+                                        flipped_horizontally=True)
+        self.scale = 0.1
+        self.position = pos
+    
+    def is_alive(self):
+        return self.health > 0
+    
+    def update(self):
+        pass
 
 class Wall(arcade.Sprite):
     """ Static sprite for stationary walls """
@@ -432,11 +449,6 @@ class Orc(Enemy):
             self.upgrade_cooldown = 1000
             self.health *= 1.1
             self.damage *= 1.1
-        
-    def on_draw(self):
-        orc_health = int(self.health)
-        output = f"Health: {orc_health}"
-        arcade.draw_text(output, 10, 900, arcade.color.RED, 50)
 
 class Goblin(Enemy):
     def __init__(self, player, actor_list, enemy_list, wall_list):
