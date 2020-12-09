@@ -13,7 +13,7 @@ GRID_PIXEL_SIZE = (SPRITE_PIXEL_SIZE * SPRITE_SCALING)
 LEFT_LIMIT = 0
 RIGHT_LIMIT = SCREEN_WIDTH
 DOORS = [[1230, 0],
-        [800, 220], [1530, 220],
+        [800, 214], [1530, 214],
         [365, 420], [1100, 420],
         [650, 620], [1380, 620]]
 CRACKS = [[451, 931], [1296, 931]]
@@ -41,8 +41,10 @@ class GameView(arcade.View):
         self.tomb = arcade.load_texture("images/tomb.png")
         arcade.set_background_color = None
         self.setup()
+        self.count_1 = 0
         self.count_2 = 0
         self.count_3 = 0
+        self.count_4 = 0
 
         # List of physics engines, one per actor; allows for multiple actors
         self.physics_engine = {}
@@ -94,8 +96,6 @@ class GameView(arcade.View):
                     self.player_sprite.coins += actor.value
                 if actor is self.player_sprite:
                     self.game_over = True
-                else:
-                    actor.position = [-100, -100]
                 actor.kill()
         
         if self.enemy_cooldown > 0:
@@ -126,6 +126,10 @@ class GameView(arcade.View):
     
     def on_mouse_press(self, _x, _y, button, _modifiers):
         self.player_sprite.on_mouse_press(self.actor_list, button)
+        print(_x, _y)
+    
+    def on_mouse_scroll(self, _x, _y, _scroll_x, _scroll_y):
+        self.player_sprite.change_weapon()
 
     def on_draw(self):
         """ Render the screen. """
@@ -297,10 +301,9 @@ class UpgradeView(arcade.View):
             self.game_view.count_2 += 1
             self.game_view.player_sprite.damage *= (1 + 1/self.game_view.count_2)
             self.game_view.player_sprite.coins -= 20
-        elif key == arcade.key.KEY_3 and self.game_view.player_sprite.coins >= 20:
-            self.count3 = 0
-            self.count3 += 1
-            self.game_view.player_sprite.damage_arrow *= (1 + 1/(2*self.count3))
+        elif key == arcade.key.KEY_3 and self.game_view.player_sprite.coins >= 30:
+            self.game_view.count_3 += 1
+            self.game_view.player_sprite.damage_arrow *= (1 + 1/(2*self.game_view.count_3))
             self.game_view.player_sprite.coins -= 20
         elif key == arcade.key.KEY_4 and self.game_view.player_sprite.coins >= 20:
             self.game_view.player_sprite.health += 50
@@ -336,8 +339,8 @@ class Actor(arcade.Sprite):
         self.health -= source.damage
         x_distance = self.center_x - source.center_x
         y_distance = self.center_y - source.center_y
-        distance = math.hypot(x_distance, y_distance)
-        self.accelerate((source.knockback * x_distance) / distance, (source.knockback * y_distance) / distance)
+        angle = math.atan(x_distance/y_distance)
+        self.accelerate(math.sin(angle) * source.knockback, math.sin(angle) * source.knockback)
     
     def accelerate(self, x_accel=None, y_accel=None):
         if (x_accel is not None and (self.left > LEFT_LIMIT and x_accel < 0
@@ -361,14 +364,13 @@ class Player(Actor):
         self.jump_speed = 20 * SPRITE_SCALING
         self.accel = 0.5
         self.damage = 5
-        self.damage_arrow = 1
         self.knockback = 10
         self.walking = False
         self.direction = "L"
+        self.weapon = "sword"
         self.hit_cooldown = 0
         self.texture = self.textures["idle"][self.direction]
-        self.coins = 0
-        self.arrows = []
+        self.coins = 20
         self.show_health = False
 
     def is_dead(self):
@@ -395,9 +397,10 @@ class Player(Actor):
 
     def on_mouse_press(self, actor_list, button):
         if button == arcade.MOUSE_BUTTON_LEFT:
-            self.swing_sword(actor_list)
-        if button == arcade.MOUSE_BUTTON_RIGHT:
-            self.fire_bow(actor_list)
+            if self.weapon == "sword":
+                self.swing_sword(actor_list)
+            elif self.weapon == "bow":
+                self.charge_bow()
 
     def swing_sword(self, actor_list):
         if self.direction == "L":
@@ -405,18 +408,19 @@ class Player(Actor):
         else:
             x_pos = self.right + 20
         self.texture = self.textures["sword"][self.direction]
-        swing = Swing(actor_list, [x_pos, self.center_y], self.direction)
+        swing = Swing(actor_list, x_pos, self.center_y, self.direction)
         for enemy in self.enemies:
             if swing.collides_with_sprite(enemy):
                     enemy.take_damage(self)
     
-    def fire_bow(self, actor_list):
-        if self.direction == "L":
-            x_pos = self.left - 20
-        else:
-            x_pos = self.right + 20
+    def charge_bow(self):
         self.texture = self.textures["bow"][self.direction]
-        self.arrows.append(Arrow(actor_list, [x_pos, self.center_y + 10], self.direction, self.damage_arrow))
+
+    def change_weapon(self):
+        if self.weapon == "sword":
+            self.weapon = "bow"
+        else:
+            self.weapon = "sword"
     
     def update(self):
         if (self.left <= LEFT_LIMIT and self.change_x < 0
@@ -435,22 +439,16 @@ class Player(Actor):
             self.accelerate(x_accel=self.accel)
         if self.hit_cooldown > 0:
             self.hit_cooldown -= 1
-        
-        for arrow in self.arrows:
-            for enemy in self.enemies:
-                if arrow.collides_with_sprite(enemy):
-                        enemy.take_damage(arrow)
-                        arrow.health -= 1
 
 
 class Swing(arcade.Sprite):
-    def __init__(self, actor_list, pos, direction):
+    def __init__(self, actor_list, x_pos, y_pos, direction):
         super().__init__()
         actor_list.append(self)
         self.health = 10
         self.show_health = False
         self.physics_engine = None
-        self.position = pos
+        self.position = [x_pos, y_pos]
         self.scale = 1.5
         if direction == "L":
             self.texture = arcade.load_texture("images/swing.png")
@@ -463,31 +461,6 @@ class Swing(arcade.Sprite):
     
     def update(self):
         self.health -= 1
-
-class Arrow(arcade.Sprite):
-    def __init__(self, actor_list, pos, direction, damage):
-        super().__init__()
-        actor_list.append(self)
-        self.physics_engine = arcade.PhysicsEnginePlatformer(self, arcade.SpriteList(), gravity_constant=0)
-        self.health = 1
-        self.show_health = False
-        if direction == "L":
-            self.texture = arcade.load_texture("images/arrow.png")
-            self.change_x = -5
-        else:
-            self.change_x = 5
-            self.texture = arcade.load_texture("images/arrow.png",
-                                        flipped_horizontally=True)
-        self.damage = damage
-        self.scale = 0.1
-        self.position = pos
-        self.knockback = 1
-    
-    def is_alive(self):
-        return self.health > 0
-    
-    def update(self):
-        pass
 
 class Wall(arcade.Sprite):
     """ Static sprite for stationary walls """
@@ -530,9 +503,6 @@ class Orc(Enemy):
         if (self.bottom + 10 < self.prey.bottom and self.physics_engine.can_jump()
                 and abs(self.center_x - self.prey.center_x) < 150):
             self.change_y = self.jump_height
-        
-        if self.physics_engine.can_jump and abs(self.change_x) > self.speed:
-            self.change_x /= FRICTION
 
         if self.upgrade_cooldown > 0:
             self.upgrade_cooldown -= 1
@@ -540,6 +510,11 @@ class Orc(Enemy):
             self.upgrade_cooldown = 1000
             self.health *= 1.1
             self.damage *= 1.1
+        
+    def on_draw(self):
+        orc_health = int(self.health)
+        output = f"Health: {orc_health}"
+        arcade.draw_text(output, 10, 900, arcade.color.RED, 50)
 
 class Goblin(Enemy):
     def __init__(self, player, actor_list, enemy_list, wall_list):
@@ -569,9 +544,6 @@ class Goblin(Enemy):
         if (self.bottom + 10 < self.prey.bottom and self.physics_engine.can_jump()
                 and abs(self.center_x - self.prey.center_x) < 150):
             self.change_y = self.jump_height
-        
-        if self.physics_engine.can_jump and abs(self.change_x) > self.speed:
-            self.change_x /= FRICTION
         
         if self.upgrade_cooldown > 0:
             self.upgrade_cooldown -= 1
