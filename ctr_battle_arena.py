@@ -40,6 +40,8 @@ class GameView(arcade.View):
         self.background = arcade.load_texture("images/castle_doors.png")
         arcade.set_background_color = None
         self.setup()
+        self.count_2 = 0
+        self.count_3 = 0
 
         # List of physics engines, one per actor; allows for multiple actors
         self.physics_engine = {}
@@ -258,9 +260,8 @@ class UpgradeView(arcade.View):
             self.game_view.player_sprite.health += 50
             self.game_view.player_sprite.coins -= 20
         elif key == arcade.key.KEY_2 and self.game_view.player_sprite.coins >= 20:
-            self.count2 = 0
-            self.count2 += 1
-            self.game_view.player_sprite.damage *= (1 + 1/self.count2)
+            self.game_view.count_2 += 1
+            self.game_view.player_sprite.damage *= (1 + 1/self.game_view.count_2)
             self.game_view.player_sprite.coins -= 20
         elif key == arcade.key.KEY_3 and self.game_view.player_sprite.coins >= 20:
             self.count3 = 0
@@ -321,7 +322,7 @@ class Player(Actor):
         self.scale = SPRITE_SCALING/4
         self.position = [216, 0]
         self.enemies = enemy_list
-        self.health = 10
+        self.health = 100
         self.speed = 5
         self.jump_speed = 20 * SPRITE_SCALING
         self.accel = 0.5
