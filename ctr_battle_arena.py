@@ -13,7 +13,7 @@ GRID_PIXEL_SIZE = (SPRITE_PIXEL_SIZE * SPRITE_SCALING)
 LEFT_LIMIT = 0
 RIGHT_LIMIT = SCREEN_WIDTH
 DOORS = [[1230, 0],
-        [800, 214], [1530, 214],
+        [800, 220], [1530, 220],
         [365, 420], [1100, 420],
         [650, 620], [1380, 620]]
 CRACKS = [[451, 931], [1296, 931]]
@@ -91,6 +91,8 @@ class GameView(arcade.View):
                     self.player_sprite.coins += actor.value
                 if actor is self.player_sprite:
                     self.game_over = True
+                else:
+                    actor.position = [-100, -100]
                 actor.kill()
         
         if self.enemy_cooldown > 0:
@@ -121,7 +123,6 @@ class GameView(arcade.View):
     
     def on_mouse_press(self, _x, _y, button, _modifiers):
         self.player_sprite.on_mouse_press(self.actor_list, button)
-        print(_x, _y)
 
     def on_draw(self):
         """ Render the screen. """
@@ -300,8 +301,8 @@ class Actor(arcade.Sprite):
         self.health -= source.damage
         x_distance = self.center_x - source.center_x
         y_distance = self.center_y - source.center_y
-        angle = math.atan(x_distance/y_distance)
-        self.accelerate(math.sin(angle) * source.knockback, math.sin(angle) * source.knockback)
+        distance = math.hypot(x_distance, y_distance)
+        self.accelerate((source.knockback * x_distance) / distance, (source.knockback * y_distance) / distance)
     
     def accelerate(self, x_accel=None, y_accel=None):
         if (x_accel is not None and (self.left > LEFT_LIMIT and x_accel < 0
@@ -325,6 +326,7 @@ class Player(Actor):
         self.jump_speed = 20 * SPRITE_SCALING
         self.accel = 0.5
         self.damage = 5
+        self.damage_arrow = 1
         self.knockback = 10
         self.walking = False
         self.direction = "L"
@@ -381,7 +383,7 @@ class Player(Actor):
         else:
             x_pos = self.right + 20
         self.texture = self.textures["bow"][self.direction]
-        self.arrows.append(Arrow(actor_list, [x_pos, self.center_y + 10], self.direction))
+        self.arrows.append(Arrow(actor_list, [x_pos, self.center_y + 10], self.direction, self.damage_arrow))
     
     def update(self):
         if (self.left <= LEFT_LIMIT and self.change_x < 0
@@ -400,6 +402,12 @@ class Player(Actor):
             self.accelerate(x_accel=self.accel)
         if self.hit_cooldown > 0:
             self.hit_cooldown -= 1
+        
+        for arrow in self.arrows:
+            for enemy in self.enemies:
+                if arrow.collides_with_sprite(enemy):
+                        enemy.take_damage(arrow)
+                        arrow.health -= 1
 
 
 class Swing(arcade.Sprite):
@@ -424,20 +432,23 @@ class Swing(arcade.Sprite):
         self.health -= 1
 
 class Arrow(arcade.Sprite):
-    def __init__(self, actor_list, pos, direction):
+    def __init__(self, actor_list, pos, direction, damage):
         super().__init__()
         actor_list.append(self)
         self.physics_engine = arcade.PhysicsEnginePlatformer(self, arcade.SpriteList(), gravity_constant=0)
         self.health = 1
+        self.show_health = False
         if direction == "L":
             self.texture = arcade.load_texture("images/arrow.png")
-            self.change_x = -10
+            self.change_x = -5
         else:
-            self.change_x = 10
+            self.change_x = 5
             self.texture = arcade.load_texture("images/arrow.png",
                                         flipped_horizontally=True)
+        self.damage = damage
         self.scale = 0.1
         self.position = pos
+        self.knockback = 1
     
     def is_alive(self):
         return self.health > 0
@@ -486,6 +497,9 @@ class Orc(Enemy):
         if (self.bottom + 10 < self.prey.bottom and self.physics_engine.can_jump()
                 and abs(self.center_x - self.prey.center_x) < 150):
             self.change_y = self.jump_height
+        
+        if self.physics_engine.can_jump and abs(self.change_x) > self.speed:
+            self.change_x /= FRICTION
 
         if self.upgrade_cooldown > 0:
             self.upgrade_cooldown -= 1
@@ -522,6 +536,9 @@ class Goblin(Enemy):
         if (self.bottom + 10 < self.prey.bottom and self.physics_engine.can_jump()
                 and abs(self.center_x - self.prey.center_x) < 150):
             self.change_y = self.jump_height
+        
+        if self.physics_engine.can_jump and abs(self.change_x) > self.speed:
+            self.change_x /= FRICTION
         
         if self.upgrade_cooldown > 0:
             self.upgrade_cooldown -= 1
