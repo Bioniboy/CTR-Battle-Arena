@@ -150,6 +150,14 @@ class GameView(arcade.View):
                 y = actor.center_y + 20
                 arcade.draw_text(output, x, y, arcade.color.RED, 14)
 
+        if self.player_sprite.health <= 0:
+           tomb_x = self.player_sprite.center_x
+           tomb_y = self.player_sprite.center_y
+           self.tomb = arcade.load_texture("images/tomb.png", tomb_x, tomb_y, 50, 50)
+           arcade.draw_lrwh_rectangle_textured(tomb_x, tomb_y, 50, 50, self.tomb)
+           
+
+
         # Put the text on the screen.
         health = int(self.player_sprite.health)
         output = f"Health: {health}"
@@ -324,7 +332,7 @@ class Player(Actor):
         self.scale = SPRITE_SCALING/4
         self.position = [216, 0]
         self.enemies = enemy_list
-        self.health = 100
+        self.health = 1
         self.speed = 5
         self.jump_speed = 20 * SPRITE_SCALING
         self.accel = 0.5
@@ -335,8 +343,8 @@ class Player(Actor):
         self.weapon = "sword"
         self.hit_cooldown = 0
         self.texture = self.textures["idle"][self.direction]
-        if self.health <= 0:
-            self.texture = arcade.load_texture("images/tomb.png")
+        # if self.health <= 0:
+        #     self.texture = arcade.load_texture("images/tomb.png")
         self.coins = 0
         self.show_health = False
 
