@@ -38,6 +38,7 @@ class GameView(arcade.View):
         self.actor_list = arcade.SpriteList()
         self.enemy_list = arcade.SpriteList()
         self.background = arcade.load_texture("images/castle_doors.png")
+        self.tomb = arcade.load_texture("images/tomb.png")
         arcade.set_background_color = None
         self.setup()
         self.count_2 = 0
@@ -136,6 +137,8 @@ class GameView(arcade.View):
         arcade.draw_lrwh_rectangle_textured(0, -SCREEN_WIDTH * .12,
                                             SCREEN_WIDTH, SCREEN_HEIGHT * 1.25,
                                             self.background)
+        
+        
 
         # Draw the sprites.
         self.wall_list.draw()
@@ -151,10 +154,9 @@ class GameView(arcade.View):
                 arcade.draw_text(output, x, y, arcade.color.RED, 14)
 
         if self.player_sprite.health <= 0:
-           tomb_x = self.player_sprite.center_x
-           tomb_y = self.player_sprite.center_y
-           self.tomb = arcade.load_texture("images/tomb.png", tomb_x, tomb_y, 50, 50)
-           arcade.draw_lrwh_rectangle_textured(tomb_x, tomb_y, 50, 50, self.tomb)
+            tomb_x = int(self.player_sprite.center_x)
+            tomb_y = int(self.player_sprite.center_y)
+            arcade.draw_lrwh_rectangle_textured(tomb_x - 20, tomb_y - 30, 75, 100, self.tomb)
            
 
 
@@ -181,19 +183,43 @@ class InstructionView(arcade.View):
     """ View to show instructions """
 
     def on_show(self):
-        """ This is run once when we switch to this view """
-        arcade.set_background_color(arcade.csscolor.DARK_SLATE_BLUE)
-
-        # Reset the viewport, necessary if we have a scrolling game and we need
-        # to reset the viewport back to the start so we can see what we draw.
-        arcade.set_viewport(0, SCREEN_WIDTH - 1, 0, SCREEN_HEIGHT - 1)
-
+        self.count = 0
+        self.background_1 = arcade.load_texture("images/menu_1.png")
+        self.background_2 = arcade.load_texture("images/menu_2.png")
+        self.background_3 = arcade.load_texture("images/menu_3.png")
+        self.player_icon = arcade.load_texture("images/knight.png")
+        arcade.set_background_color = None
+    
     def on_draw(self):
-        """ Draw this view """
+        """ Render the screen. """
         arcade.start_render()
-        arcade.draw_text("Instructions Screen", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2,
+
+        if self.count < 30:
+            self.count += 1
+        else:
+            self.count = 0
+
+        if self.count < 10:
+            arcade.draw_lrwh_rectangle_textured(0, SCREEN_WIDTH * .001, SCREEN_WIDTH, SCREEN_HEIGHT * 1, self.background_1)
+        elif self.count < 20:
+            arcade.draw_lrwh_rectangle_textured(0, SCREEN_WIDTH * .001, SCREEN_WIDTH, SCREEN_HEIGHT * 1, self.background_2)
+        else:
+            arcade.draw_lrwh_rectangle_textured(0, SCREEN_WIDTH * .001, SCREEN_WIDTH, SCREEN_HEIGHT * 1, self.background_3)
+    
+        arcade.draw_lrwh_rectangle_textured(1200, 100, 150, 150, self.player_icon)
+
+
+        arcade.draw_text("Click to Start", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2,
                          arcade.color.WHITE, font_size=50, anchor_x="center")
-        arcade.draw_text("Click to advance", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2-75,
+        arcade.draw_text("Controls: ", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2-75,
+                         arcade.color.WHITE, font_size=20, anchor_x="center")
+        arcade.draw_text("WASD / Spacebar - Move / Jump", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2-100,
+                         arcade.color.WHITE, font_size=20, anchor_x="center")                 
+        arcade.draw_text("Left Mouse - Sword", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2-125,
+                         arcade.color.WHITE, font_size=20, anchor_x="center")
+        arcade.draw_text("Right Mouse - Bow", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2-150,
+                         arcade.color.WHITE, font_size=20, anchor_x="center")
+        arcade.draw_text("ESC - Upgrade Menu / Pause ", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2-175,
                          arcade.color.WHITE, font_size=20, anchor_x="center")
 
     def on_mouse_press(self, _x, _y, _button, _modifiers):
@@ -212,43 +238,43 @@ class UpgradeView(arcade.View):
         arcade.start_render()
 
         arcade.draw_text("PAUSED", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2+50,
-                         arcade.color.BLACK, font_size=50, anchor_x="center")
+                         arcade.color.WHITE, font_size=50, anchor_x="center")
 
         # Show tip to return or reset
         arcade.draw_text("Press Esc. to return",
                          SCREEN_WIDTH / 2,
                          SCREEN_HEIGHT / 2,
-                         arcade.color.BLACK,
+                         arcade.color.WHITE,
                          font_size=20,
                          anchor_x="center")
         arcade.draw_text("Press Enter to reset",
                          SCREEN_WIDTH / 2,
                          SCREEN_HEIGHT / 2-30,
-                         arcade.color.BLACK,
+                         arcade.color.WHITE,
                          font_size=20,
                          anchor_x="center")
         arcade.draw_text("1: Increase Health by 50  Cost: 20",
                          SCREEN_WIDTH / 2,
                          SCREEN_HEIGHT / 2-60,
-                         arcade.color.BLACK,
+                         arcade.color.WHITE,
                          font_size=20,
                          anchor_x="center")
         arcade.draw_text("2: Increase Sword Damage  Cost: 30",
                          SCREEN_WIDTH / 2,
                          SCREEN_HEIGHT / 2-90,
-                         arcade.color.BLACK,
+                         arcade.color.WHITE,
                          font_size=20,
                          anchor_x="center")
         arcade.draw_text("3: Increase Bow Damage    Cost: 30",
                          SCREEN_WIDTH / 2,
                          SCREEN_HEIGHT / 2-120,
-                         arcade.color.BLACK,
+                         arcade.color.WHITE,
                          font_size=20,
                          anchor_x="center")
         arcade.draw_text("4: Increase Agility      Cost: 50",
                          SCREEN_WIDTH / 2,
                          SCREEN_HEIGHT / 2-150,
-                         arcade.color.BLACK,
+                         arcade.color.WHITE,
                          font_size=20,
                          anchor_x="center")
         health = int(self.game_view.player_sprite.health)
@@ -332,7 +358,7 @@ class Player(Actor):
         self.scale = SPRITE_SCALING/4
         self.position = [216, 0]
         self.enemies = enemy_list
-        self.health = 1
+        self.health = 100
         self.speed = 5
         self.jump_speed = 20 * SPRITE_SCALING
         self.accel = 0.5
@@ -343,8 +369,6 @@ class Player(Actor):
         self.weapon = "sword"
         self.hit_cooldown = 0
         self.texture = self.textures["idle"][self.direction]
-        # if self.health <= 0:
-        #     self.texture = arcade.load_texture("images/tomb.png")
         self.coins = 0
         self.show_health = False
 
@@ -458,7 +482,7 @@ class Orc(Enemy):
         self.scale = SPRITE_SCALING/3.25
 
         self.position = random.choice(DOORS)
-        self.health = 50
+        self.health = 75
         self.speed = 1.5
         self.accel = 0.3
         self.jump_height = 10
@@ -499,7 +523,7 @@ class Goblin(Enemy):
         self.scale = SPRITE_SCALING/4
 
         self.position = random.choice(DOORS)
-        self.health = 30
+        self.health = 50
         self.speed = 2
         self.accel = 0.2
         self.jump_height = 10
