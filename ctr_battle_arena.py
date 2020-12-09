@@ -13,7 +13,7 @@ GRID_PIXEL_SIZE = (SPRITE_PIXEL_SIZE * SPRITE_SCALING)
 LEFT_LIMIT = 0
 RIGHT_LIMIT = SCREEN_WIDTH
 DOORS = [[1230, 0],
-        [800, 214], [1530, 214],
+        [800, 220], [1530, 220],
         [365, 420], [1100, 420],
         [650, 620], [1380, 620]]
 CRACKS = [[451, 931], [1296, 931]]
@@ -38,13 +38,10 @@ class GameView(arcade.View):
         self.actor_list = arcade.SpriteList()
         self.enemy_list = arcade.SpriteList()
         self.background = arcade.load_texture("images/castle_doors.png")
-        self.tomb = arcade.load_texture("images/tomb.png")
         arcade.set_background_color = None
         self.setup()
-        self.count_1 = 0
         self.count_2 = 0
         self.count_3 = 0
-        self.count_4 = 0
 
         # List of physics engines, one per actor; allows for multiple actors
         self.physics_engine = {}
@@ -96,6 +93,8 @@ class GameView(arcade.View):
                     self.player_sprite.coins += actor.value
                 if actor is self.player_sprite:
                     self.game_over = True
+                else:
+                    actor.position = [-100, -100]
                 actor.kill()
         
         if self.enemy_cooldown > 0:
@@ -126,10 +125,6 @@ class GameView(arcade.View):
     
     def on_mouse_press(self, _x, _y, button, _modifiers):
         self.player_sprite.on_mouse_press(self.actor_list, button)
-        print(_x, _y)
-    
-    def on_mouse_scroll(self, _x, _y, _scroll_x, _scroll_y):
-        self.player_sprite.change_weapon()
 
     def on_draw(self):
         """ Render the screen. """
@@ -139,8 +134,6 @@ class GameView(arcade.View):
         arcade.draw_lrwh_rectangle_textured(0, -SCREEN_WIDTH * .12,
                                             SCREEN_WIDTH, SCREEN_HEIGHT * 1.25,
                                             self.background)
-        
-        
 
         # Draw the sprites.
         self.wall_list.draw()
@@ -154,13 +147,6 @@ class GameView(arcade.View):
                 x = actor.center_x - 10
                 y = actor.center_y + 20
                 arcade.draw_text(output, x, y, arcade.color.RED, 14)
-
-        if self.player_sprite.health <= 0:
-            tomb_x = int(self.player_sprite.center_x)
-            tomb_y = int(self.player_sprite.center_y)
-            arcade.draw_lrwh_rectangle_textured(tomb_x - 20, tomb_y - 30, 75, 100, self.tomb)
-           
-
 
         # Put the text on the screen.
         health = int(self.player_sprite.health)
@@ -185,43 +171,19 @@ class InstructionView(arcade.View):
     """ View to show instructions """
 
     def on_show(self):
-        self.count = 0
-        self.background_1 = arcade.load_texture("images/menu_1.png")
-        self.background_2 = arcade.load_texture("images/menu_2.png")
-        self.background_3 = arcade.load_texture("images/menu_3.png")
-        self.player_icon = arcade.load_texture("images/knight.png")
-        arcade.set_background_color = None
-    
+        """ This is run once when we switch to this view """
+        arcade.set_background_color(arcade.csscolor.DARK_SLATE_BLUE)
+
+        # Reset the viewport, necessary if we have a scrolling game and we need
+        # to reset the viewport back to the start so we can see what we draw.
+        arcade.set_viewport(0, SCREEN_WIDTH - 1, 0, SCREEN_HEIGHT - 1)
+
     def on_draw(self):
-        """ Render the screen. """
+        """ Draw this view """
         arcade.start_render()
-
-        if self.count < 30:
-            self.count += 1
-        else:
-            self.count = 0
-
-        if self.count < 10:
-            arcade.draw_lrwh_rectangle_textured(0, SCREEN_WIDTH * .001, SCREEN_WIDTH, SCREEN_HEIGHT * 1, self.background_1)
-        elif self.count < 20:
-            arcade.draw_lrwh_rectangle_textured(0, SCREEN_WIDTH * .001, SCREEN_WIDTH, SCREEN_HEIGHT * 1, self.background_2)
-        else:
-            arcade.draw_lrwh_rectangle_textured(0, SCREEN_WIDTH * .001, SCREEN_WIDTH, SCREEN_HEIGHT * 1, self.background_3)
-    
-        arcade.draw_lrwh_rectangle_textured(1200, 100, 150, 150, self.player_icon)
-
-
-        arcade.draw_text("Click to Start", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2,
+        arcade.draw_text("Instructions Screen", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2,
                          arcade.color.WHITE, font_size=50, anchor_x="center")
-        arcade.draw_text("Controls: ", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2-75,
-                         arcade.color.WHITE, font_size=20, anchor_x="center")
-        arcade.draw_text("WASD / Spacebar - Move / Jump", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2-100,
-                         arcade.color.WHITE, font_size=20, anchor_x="center")                 
-        arcade.draw_text("Left Mouse - Sword", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2-125,
-                         arcade.color.WHITE, font_size=20, anchor_x="center")
-        arcade.draw_text("Right Mouse - Bow", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2-150,
-                         arcade.color.WHITE, font_size=20, anchor_x="center")
-        arcade.draw_text("ESC - Upgrade Menu / Pause ", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2-175,
+        arcade.draw_text("Click to advance", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2-75,
                          arcade.color.WHITE, font_size=20, anchor_x="center")
 
     def on_mouse_press(self, _x, _y, _button, _modifiers):
@@ -240,43 +202,43 @@ class UpgradeView(arcade.View):
         arcade.start_render()
 
         arcade.draw_text("PAUSED", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2+50,
-                         arcade.color.WHITE, font_size=50, anchor_x="center")
+                         arcade.color.BLACK, font_size=50, anchor_x="center")
 
         # Show tip to return or reset
         arcade.draw_text("Press Esc. to return",
                          SCREEN_WIDTH / 2,
                          SCREEN_HEIGHT / 2,
-                         arcade.color.WHITE,
+                         arcade.color.BLACK,
                          font_size=20,
                          anchor_x="center")
         arcade.draw_text("Press Enter to reset",
                          SCREEN_WIDTH / 2,
                          SCREEN_HEIGHT / 2-30,
-                         arcade.color.WHITE,
+                         arcade.color.BLACK,
                          font_size=20,
                          anchor_x="center")
         arcade.draw_text("1: Increase Health by 50  Cost: 20",
                          SCREEN_WIDTH / 2,
                          SCREEN_HEIGHT / 2-60,
-                         arcade.color.WHITE,
+                         arcade.color.BLACK,
                          font_size=20,
                          anchor_x="center")
         arcade.draw_text("2: Increase Sword Damage  Cost: 30",
                          SCREEN_WIDTH / 2,
                          SCREEN_HEIGHT / 2-90,
-                         arcade.color.WHITE,
+                         arcade.color.BLACK,
                          font_size=20,
                          anchor_x="center")
         arcade.draw_text("3: Increase Bow Damage    Cost: 30",
                          SCREEN_WIDTH / 2,
                          SCREEN_HEIGHT / 2-120,
-                         arcade.color.WHITE,
+                         arcade.color.BLACK,
                          font_size=20,
                          anchor_x="center")
         arcade.draw_text("4: Increase Agility      Cost: 50",
                          SCREEN_WIDTH / 2,
                          SCREEN_HEIGHT / 2-150,
-                         arcade.color.WHITE,
+                         arcade.color.BLACK,
                          font_size=20,
                          anchor_x="center")
         health = int(self.game_view.player_sprite.health)
@@ -301,9 +263,10 @@ class UpgradeView(arcade.View):
             self.game_view.count_2 += 1
             self.game_view.player_sprite.damage *= (1 + 1/self.game_view.count_2)
             self.game_view.player_sprite.coins -= 20
-        elif key == arcade.key.KEY_3 and self.game_view.player_sprite.coins >= 30:
-            self.game_view.count_3 += 1
-            self.game_view.player_sprite.damage_arrow *= (1 + 1/(2*self.game_view.count_3))
+        elif key == arcade.key.KEY_3 and self.game_view.player_sprite.coins >= 20:
+            self.count3 = 0
+            self.count3 += 1
+            self.game_view.player_sprite.damage_arrow *= (1 + 1/(2*self.count3))
             self.game_view.player_sprite.coins -= 20
         elif key == arcade.key.KEY_4 and self.game_view.player_sprite.coins >= 20:
             self.game_view.player_sprite.health += 50
@@ -339,8 +302,8 @@ class Actor(arcade.Sprite):
         self.health -= source.damage
         x_distance = self.center_x - source.center_x
         y_distance = self.center_y - source.center_y
-        angle = math.atan(x_distance/y_distance)
-        self.accelerate(math.sin(angle) * source.knockback, math.sin(angle) * source.knockback)
+        distance = math.hypot(x_distance, y_distance)
+        self.accelerate((source.knockback * x_distance) / distance, (source.knockback * y_distance) / distance)
     
     def accelerate(self, x_accel=None, y_accel=None):
         if (x_accel is not None and (self.left > LEFT_LIMIT and x_accel < 0
@@ -364,13 +327,16 @@ class Player(Actor):
         self.jump_speed = 20 * SPRITE_SCALING
         self.accel = 0.5
         self.damage = 5
+        self.damage_arrow = 1
         self.knockback = 10
         self.walking = False
         self.direction = "L"
-        self.weapon = "sword"
         self.hit_cooldown = 0
         self.texture = self.textures["idle"][self.direction]
-        self.coins = 20
+        if self.health <= 0:
+            self.texture = arcade.load_texture("images/tomb.png")
+        self.coins = 0
+        self.arrows = []
         self.show_health = False
 
     def is_dead(self):
@@ -397,10 +363,9 @@ class Player(Actor):
 
     def on_mouse_press(self, actor_list, button):
         if button == arcade.MOUSE_BUTTON_LEFT:
-            if self.weapon == "sword":
-                self.swing_sword(actor_list)
-            elif self.weapon == "bow":
-                self.charge_bow()
+            self.swing_sword(actor_list)
+        if button == arcade.MOUSE_BUTTON_RIGHT:
+            self.fire_bow(actor_list)
 
     def swing_sword(self, actor_list):
         if self.direction == "L":
@@ -408,19 +373,18 @@ class Player(Actor):
         else:
             x_pos = self.right + 20
         self.texture = self.textures["sword"][self.direction]
-        swing = Swing(actor_list, x_pos, self.center_y, self.direction)
+        swing = Swing(actor_list, [x_pos, self.center_y], self.direction)
         for enemy in self.enemies:
             if swing.collides_with_sprite(enemy):
                     enemy.take_damage(self)
     
-    def charge_bow(self):
-        self.texture = self.textures["bow"][self.direction]
-
-    def change_weapon(self):
-        if self.weapon == "sword":
-            self.weapon = "bow"
+    def fire_bow(self, actor_list):
+        if self.direction == "L":
+            x_pos = self.left - 20
         else:
-            self.weapon = "sword"
+            x_pos = self.right + 20
+        self.texture = self.textures["bow"][self.direction]
+        self.arrows.append(Arrow(actor_list, [x_pos, self.center_y + 10], self.direction, self.damage_arrow))
     
     def update(self):
         if (self.left <= LEFT_LIMIT and self.change_x < 0
@@ -439,16 +403,22 @@ class Player(Actor):
             self.accelerate(x_accel=self.accel)
         if self.hit_cooldown > 0:
             self.hit_cooldown -= 1
+        
+        for arrow in self.arrows:
+            for enemy in self.enemies:
+                if arrow.collides_with_sprite(enemy):
+                        enemy.take_damage(arrow)
+                        arrow.health -= 1
 
 
 class Swing(arcade.Sprite):
-    def __init__(self, actor_list, x_pos, y_pos, direction):
+    def __init__(self, actor_list, pos, direction):
         super().__init__()
         actor_list.append(self)
         self.health = 10
         self.show_health = False
         self.physics_engine = None
-        self.position = [x_pos, y_pos]
+        self.position = pos
         self.scale = 1.5
         if direction == "L":
             self.texture = arcade.load_texture("images/swing.png")
@@ -461,6 +431,31 @@ class Swing(arcade.Sprite):
     
     def update(self):
         self.health -= 1
+
+class Arrow(arcade.Sprite):
+    def __init__(self, actor_list, pos, direction, damage):
+        super().__init__()
+        actor_list.append(self)
+        self.physics_engine = arcade.PhysicsEnginePlatformer(self, arcade.SpriteList(), gravity_constant=0)
+        self.health = 1
+        self.show_health = False
+        if direction == "L":
+            self.texture = arcade.load_texture("images/arrow.png")
+            self.change_x = -5
+        else:
+            self.change_x = 5
+            self.texture = arcade.load_texture("images/arrow.png",
+                                        flipped_horizontally=True)
+        self.damage = damage
+        self.scale = 0.1
+        self.position = pos
+        self.knockback = 1
+    
+    def is_alive(self):
+        return self.health > 0
+    
+    def update(self):
+        pass
 
 class Wall(arcade.Sprite):
     """ Static sprite for stationary walls """
@@ -483,7 +478,7 @@ class Orc(Enemy):
         self.scale = SPRITE_SCALING/3.25
 
         self.position = random.choice(DOORS)
-        self.health = 75
+        self.health = 50
         self.speed = 1.5
         self.accel = 0.3
         self.jump_height = 10
@@ -503,6 +498,9 @@ class Orc(Enemy):
         if (self.bottom + 10 < self.prey.bottom and self.physics_engine.can_jump()
                 and abs(self.center_x - self.prey.center_x) < 150):
             self.change_y = self.jump_height
+        
+        if self.physics_engine.can_jump and abs(self.change_x) > self.speed:
+            self.change_x /= FRICTION
 
         if self.upgrade_cooldown > 0:
             self.upgrade_cooldown -= 1
@@ -510,11 +508,6 @@ class Orc(Enemy):
             self.upgrade_cooldown = 1000
             self.health *= 1.1
             self.damage *= 1.1
-        
-    def on_draw(self):
-        orc_health = int(self.health)
-        output = f"Health: {orc_health}"
-        arcade.draw_text(output, 10, 900, arcade.color.RED, 50)
 
 class Goblin(Enemy):
     def __init__(self, player, actor_list, enemy_list, wall_list):
@@ -524,7 +517,7 @@ class Goblin(Enemy):
         self.scale = SPRITE_SCALING/4
 
         self.position = random.choice(DOORS)
-        self.health = 50
+        self.health = 30
         self.speed = 2
         self.accel = 0.2
         self.jump_height = 10
@@ -544,6 +537,9 @@ class Goblin(Enemy):
         if (self.bottom + 10 < self.prey.bottom and self.physics_engine.can_jump()
                 and abs(self.center_x - self.prey.center_x) < 150):
             self.change_y = self.jump_height
+        
+        if self.physics_engine.can_jump and abs(self.change_x) > self.speed:
+            self.change_x /= FRICTION
         
         if self.upgrade_cooldown > 0:
             self.upgrade_cooldown -= 1
