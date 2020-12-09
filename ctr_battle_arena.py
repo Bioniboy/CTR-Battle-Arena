@@ -105,7 +105,7 @@ class GameView(arcade.View):
             for _ in range(int(self.enemy_count)):
                 enemy_choice = random.randint(1, 100)
                 if enemy_choice < 40:
-                    Orc(self.player_sprite, self.actor_list, self.enemy_list, self.wall_list)
+                    Skeleton(self.player_sprite, self.actor_list, self.enemy_list, self.wall_list)
                 elif 40 <= enemy_choice < 95:
                     Goblin(self.player_sprite, self.actor_list, self.enemy_list, self.wall_list)
                 else:
@@ -547,6 +547,65 @@ class Goblin(Enemy):
             self.upgrade_cooldown = 1000
             self.health *= 1.1
             self.damage *= 1.1
+
+class Skeleton(Enemy):
+    def __init__(self, player, actor_list, enemy_list, wall_list):
+        super().__init__(player, actor_list, enemy_list, wall_list)
+        self.add_texture("images/skeleton.png", "idle")
+        self.texture = self.textures["idle"]["R"]
+        self.direction = "R"
+        self.scale = SPRITE_SCALING/3.25
+        self.actor_list = actor_list
+        self.position = random.choice(DOORS)
+        self.health = 20
+        self.speed = 2
+        self.accel = 0.3
+        self.jump_height = 10
+        self.damage = 0
+        self.damage_arrow = 3
+        self.knockback = 1
+        self.value = 10
+        self.prey = player
+        self.upgrade_cooldown = 1000
+        self.shoot_cooldown = 50
+        self.arrows = []
+        
+    def update(self):
+        if abs(self.center_x - self.prey.center_x) < 400 or abs(self.center_y - self.prey.center_y) > 100:
+            if self.center_x < self.prey.center_x and self.change_x < self.speed:
+                self.change_x += self.accel
+                self.texture = self.textures["idle"]["R"]
+                self.direction = "R"
+            elif self.center_x > self.prey.center_x and self.change_x > -self.speed:
+                self.change_x -= self.accel
+                self.texture = self.textures["idle"]["L"]
+                self.direction = "L"
+        if (self.bottom + 10 < self.prey.bottom and self.physics_engine.can_jump()
+                and abs(self.center_x - self.prey.center_x) < 150):
+            self.change_y = self.jump_height
+        
+        if self.physics_engine.can_jump and abs(self.change_x) > self.speed:
+            self.change_x /= FRICTION
+
+        if self.upgrade_cooldown > 0:
+            self.upgrade_cooldown -= 1
+        else:
+            self.upgrade_cooldown = 1000
+            self.health *= 1.1
+            self.damage_arrow *= 1.1
+
+        if self.shoot_cooldown > 0:
+            self.shoot_cooldown -= 1
+        else:
+            self.shoot_cooldown = 50
+            self.fire_bow(self.actor_list)
+        
+    def fire_bow(self, actor_list):
+        if self.direction == "L":
+            x_pos = self.left - 20
+        else:
+            x_pos = self.right + 20
+        self.arrows.append(Arrow(actor_list, [x_pos, self.center_y + 10], self.direction, self.damage_arrow))
 
 class Dragon(Enemy):
     def __init__(self, player, actor_list, enemy_list, wall_list):
