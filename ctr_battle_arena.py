@@ -333,8 +333,6 @@ class Player(Actor):
         self.direction = "L"
         self.hit_cooldown = 0
         self.texture = self.textures["idle"][self.direction]
-        if self.health <= 0:
-            self.texture = arcade.load_texture("images/tomb.png")
         self.coins = 0
         self.arrows = []
         self.show_health = False
