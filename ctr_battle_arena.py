@@ -2,6 +2,7 @@ import arcade
 import images
 import math
 import random
+import time
 
 SPRITE_SCALING = 0.5
 
@@ -53,6 +54,7 @@ class GameView(arcade.View):
         self.enemy_cooldown = 0
         self.enemy_count = 1.0
         self.game_over = False
+        self.start_time = self.time_lapsed = time.time()
         
 
         #self.coins = 0
@@ -169,7 +171,17 @@ class GameView(arcade.View):
         output = f"Coins: {coins}"
         arcade.draw_text(output, 10, 940, arcade.color.YELLOW, 20)
 
-        if self.game_over is True:
+        end_time = time.time()
+        if not self.game_over:
+            self.time_lapsed = end_time - self.start_time
+        mins = self.time_lapsed // 60
+        secs = int(self.time_lapsed % 60)
+        hrs = int(mins // 60)
+        mins = int(mins % 60)
+        output = f"{hrs}:{mins}:{secs}"
+        arcade.draw_text(output, 1600, 960, arcade.color.WHITE, 30)
+
+        if self.game_over:
             arcade.draw_text("Game Over", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2,
             arcade.color.BLACK, font_size=50, anchor_x="center")
             arcade.draw_text("Press Enter to reset",
