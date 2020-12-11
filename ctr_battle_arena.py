@@ -381,6 +381,7 @@ class Player(Actor):
         self.direction = "L"
         self.weapon = "sword"
         self.hit_cooldown = 0
+        self.move_cooldown = 0
         self.texture = self.textures["idle"][self.direction]
         self.arrows = []
         self.coins = 20
@@ -409,10 +410,12 @@ class Player(Actor):
             self.change_y *= 0.5
 
     def on_mouse_press(self, actor_list, button):
-        if button == arcade.MOUSE_BUTTON_LEFT:
-            self.swing_sword(actor_list)
-        if button == arcade.MOUSE_BUTTON_RIGHT:
-            self.fire_bow(actor_list)
+        if self.move_cooldown == 0:
+            self.move_cooldown = 10
+            if button == arcade.MOUSE_BUTTON_LEFT:
+                self.swing_sword(actor_list)
+            if button == arcade.MOUSE_BUTTON_RIGHT:
+                self.fire_bow(actor_list)
 
     def swing_sword(self, actor_list):
         if self.direction == "L":
@@ -442,6 +445,8 @@ class Player(Actor):
                 if self.collides_with_sprite(enemy):
                     self.take_damage(enemy)
                     self.hit_cooldown = 50
+        if self.move_cooldown > 0:
+            self.move_cooldown -= 1
         if abs(self.change_x) > 0 and self.physics_engine.can_jump and (not self.walking or abs(self.change_x) > self.speed):
             self.change_x /= FRICTION
         if self.walking and self.direction == "L" and self.change_x > -self.speed:
