@@ -108,16 +108,18 @@ class GameView(arcade.View):
             self.enemy_cooldown = 500
             self.enemy_count += 0.1
             for _ in range(int(self.enemy_count)):
-                enemy_choice = random.randint(1, 100)
-                if enemy_choice < 30:
+                enemy_choice = random.randint(1, 200)
+                if enemy_choice < 50:
                     Orc(self.player_sprite, self.actor_list, self.enemy_list, self.wall_list)
-                elif enemy_choice < 70:
+                elif enemy_choice < 130:
                     Goblin(self.player_sprite, self.actor_list, self.enemy_list, self.wall_list)
-                elif enemy_choice < 95:
+                elif enemy_choice < 180:
                     Skeleton(self.player_sprite, self.actor_list, self.enemy_list, self.wall_list)
+                elif enemy_choice < 190:
+                    Cyclops(self.player_sprite, self.actor_list, self.enemy_list, self.wall_list)
                 else:
                     Dragon(self.player_sprite, self.actor_list, self.enemy_list, self.border_list) 
-
+#50, 130, 180
     def on_key_press(self, key, modifiers):
         self.player_sprite.on_key_press(key)
         if key in [arcade.key.ESCAPE]:
@@ -141,6 +143,7 @@ class GameView(arcade.View):
         arcade.draw_lrwh_rectangle_textured(0, -SCREEN_WIDTH * .12,
                                             SCREEN_WIDTH, SCREEN_HEIGHT * 1.25,
                                             self.background)
+        arcade.draw_rectangle_filled(75, 970, 150, 60, arcade.color.BLACK)
 
         # Draw the sprites.
         self.wall_list.draw()
@@ -266,7 +269,7 @@ class UpgradeView(arcade.View):
                          arcade.color.WHITE,
                          font_size=20,
                          anchor_x="center")
-        arcade.draw_text("1: Increase Health by 50  Cost: 20",
+        arcade.draw_text("1: Increase Health by 25  Cost: 20",
                          SCREEN_WIDTH / 2,
                          SCREEN_HEIGHT / 2-60,
                          arcade.color.WHITE,
@@ -281,12 +284,6 @@ class UpgradeView(arcade.View):
         arcade.draw_text("3: Increase Bow Damage    Cost: 30",
                          SCREEN_WIDTH / 2,
                          SCREEN_HEIGHT / 2-120,
-                         arcade.color.WHITE,
-                         font_size=20,
-                         anchor_x="center")
-        arcade.draw_text("4: Increase Agility      Cost: 50",
-                         SCREEN_WIDTH / 2,
-                         SCREEN_HEIGHT / 2-150,
                          arcade.color.WHITE,
                          font_size=20,
                          anchor_x="center")
@@ -306,19 +303,16 @@ class UpgradeView(arcade.View):
             game = GameView()
             self.window.show_view(game)
         elif key == arcade.key.KEY_1 and self.game_view.player_sprite.coins >= 20:
-            self.game_view.player_sprite.health += 50
+            self.game_view.player_sprite.health += 25
             self.game_view.player_sprite.coins -= 20
         elif key == arcade.key.KEY_2 and self.game_view.player_sprite.coins >= 30:
             self.game_view.count_2 += 1
-            self.game_view.player_sprite.damage *= (1 + 1/self.game_view.count_2)
+            self.game_view.player_sprite.damage *= (1 + 1/(2*self.game_view.count_2))
             self.game_view.player_sprite.coins -= 30
         elif key == arcade.key.KEY_3 and self.game_view.player_sprite.coins >= 30:
             self.game_view.count_3 += 1
             self.game_view.player_sprite.damage_arrow *= (1 + 1/(2*self.game_view.count_3))
             self.game_view.player_sprite.coins -= 30
-        elif key == arcade.key.KEY_4 and self.game_view.player_sprite.coins >= 20:
-            self.game_view.player_sprite.health += 50
-            self.game_view.player_sprite.coins -= 20
         
 
 class Actor(arcade.Sprite):
@@ -384,7 +378,7 @@ class Player(Actor):
         self.move_cooldown = 0
         self.texture = self.textures["idle"][self.direction]
         self.arrows = []
-        self.coins = 20
+        self.coins = 30
         self.show_health = False
 
     def is_dead(self):
@@ -679,14 +673,14 @@ class Dragon(Enemy):
         self.scale = SPRITE_SCALING/1.5
 
         self.position = random.choice(CRACKS)
-        self.health = 30
+        self.health = 150
         self.speed = 5
         self.accel = 0.1
         self.jump_height = 10
         self.prey = player
         self.damage = 5
         self.knockback = 20
-        self.value = 20
+        self.value = 50
         self.upgrade_cooldown = 1000
 
     def update(self):
@@ -709,6 +703,44 @@ class Dragon(Enemy):
             self.health *= 1.1
             self.damage *= 1.1
         
+class Cyclops(Enemy):
+    def __init__(self, player, actor_list, enemy_list, wall_list):
+        super().__init__(player, actor_list, enemy_list, wall_list)
+        self.add_texture("images/cyclops.png", "idle")
+        self.texture = self.textures["idle"]["R"]
+        self.scale = SPRITE_SCALING/2
+
+        self.position = random.choice(DOORS)
+        self.health = 200
+        self.speed = 1.25
+        self.accel = 0.3
+        self.jump_height = 5
+        self.damage = 10
+        self.knockback = 10
+        self.value = 75
+        self.prey = player
+        self.upgrade_cooldown = 1000
+        
+    def update(self):
+        if self.center_x < self.prey.center_x and self.change_x < self.speed:
+            self.change_x += self.accel
+            self.texture = self.textures["idle"]["R"]
+        elif self.center_x > self.prey.center_x and self.change_x > -self.speed:
+            self.change_x -= self.accel
+            self.texture = self.textures["idle"]["L"]
+        if (self.bottom + 10 < self.prey.bottom and self.physics_engine.can_jump()
+                and abs(self.center_x - self.prey.center_x) < 150):
+            self.change_y = self.jump_height
+        
+        if self.physics_engine.can_jump and abs(self.change_x) > self.speed:
+            self.change_x /= FRICTION
+
+        if self.upgrade_cooldown > 0:
+            self.upgrade_cooldown -= 1
+        else:
+            self.upgrade_cooldown = 1000
+            self.health *= 1.1
+            self.damage *= 1.1
 
 def main():
     """ Main method """
