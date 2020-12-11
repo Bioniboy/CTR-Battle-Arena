@@ -167,7 +167,10 @@ class GameView(arcade.View):
 
         # Put the text on the screen.
         health = int(self.player_sprite.health)
-        output = f"Health: {health}"
+        if self.player_sprite.health <= 0:
+            output = f"Health: {0}"
+        else:
+            output = f"Health: {health}"
         arcade.draw_text(output, 10, 970,
                          arcade.color.RED, 20)
         coins = self.player_sprite.coins
@@ -304,7 +307,7 @@ class UpgradeView(arcade.View):
             self.window.show_view(game)
         elif key == arcade.key.KEY_1 and self.game_view.player_sprite.coins >= 20:
             self.game_view.player_sprite.health += 25
-            self.game_view.player_sprite.coins -= 20
+            self.game_view.player_sprite.coins -= 25
         elif key == arcade.key.KEY_2 and self.game_view.player_sprite.coins >= 30:
             self.game_view.count_2 += 1
             self.game_view.player_sprite.damage *= (1 + 1/(2*self.game_view.count_2))
