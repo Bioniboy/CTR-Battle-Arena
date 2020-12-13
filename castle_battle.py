@@ -35,6 +35,8 @@ class GameView(arcade.View):
         # Sprite lists
         self.wall_list = arcade.SpriteList()
         self.border_list = arcade.SpriteList()
+        self.platform_list = arcade.SpriteList()
+        self.floor_list = arcade.SpriteList()
         self.player_list = arcade.SpriteList()
         self.actor_list = arcade.SpriteList()
         self.enemy_list = arcade.SpriteList()
@@ -61,16 +63,16 @@ class GameView(arcade.View):
 
     def setup(self):    
         for i in list(range(4)) + list(range(8, 30)):
-            Wall(self.wall_list, i, 2.9, "images/floor.png")
-        Wall(self.wall_list, 5.6, 1.5, "images/floor.png")
+            Wall(self.floor_list, i, 2.9, "images/floor.png")
+        Wall(self.platform_list, 5.6, 1.5, "images/floor.png")
 
         for i in list(range(9)) + list(range(14, 20)) + list(range(22, 30)):
-            Wall(self.wall_list, i, 6.15, "images/floor.png")
-        Wall(self.wall_list, 10, 4.75, "images/floor.png")
+            Wall(self.floor_list, i, 6.15, "images/floor.png")
+        Wall(self.platform_list, 10, 4.75, "images/floor.png")
 
         for i in list(range(5, 14)) + list(range(17, 26)):
-            Wall(self.wall_list, i, 9.4, "images/floor.png")
-        Wall(self.wall_list, 3, 8, "images/floor.png")
+            Wall(self.floor_list, i, 9.4, "images/floor.png")
+        Wall(self.platform_list, 3, 8, "images/floor.png")
 
         #Create Border
         for i in range(50):
@@ -78,7 +80,10 @@ class GameView(arcade.View):
             Wall(self.border_list, -5, i, ":resources:images/tiles/grassMid.png")
             Wall(self.border_list, 35, i, ":resources:images/tiles/grassMid.png")
             Wall(self.border_list, (i - 10), 20, ":resources:images/tiles/grassMid.png")
-        self.wall_list.extend(self.border_list) 
+        self.floor_list.extend(self.border_list)
+        self.wall_list.extend(self.floor_list) 
+        self.wall_list.extend(self.platform_list)
+
 
     def on_update(self, delta_time):
         # Call update on all sprites
@@ -116,7 +121,7 @@ class GameView(arcade.View):
                 elif enemy_choice < 180:
                     Skeleton(self.player_sprite, self.actor_list, self.enemy_list, self.wall_list)
                 elif enemy_choice < 190:
-                    Cyclops(self.player_sprite, self.actor_list, self.enemy_list, self.wall_list)
+                    Cyclops(self.player_sprite, self.actor_list, self.enemy_list, self.floor_list)
                 else:
                     Dragon(self.player_sprite, self.actor_list, self.enemy_list, self.border_list) 
 #50, 130, 180
@@ -371,7 +376,7 @@ class Player(Actor):
         self.speed = 5
         self.accel = 0.5
         self.damage = 5
-        self.damage_arrow = 1
+        self.damage_arrow = 2
         self.knockback = 10
         self.walking = False
         self.direction = "L"
@@ -497,7 +502,7 @@ class Arrow(arcade.Sprite):
         self.damage = damage
         self.scale = 0.1
         self.position = pos
-        self.knockback = 1
+        self.knockback = 2
     
     def is_alive(self):
         return self.health > 0
