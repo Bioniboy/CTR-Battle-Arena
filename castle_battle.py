@@ -474,8 +474,8 @@ class Player(Actor):
         self.arrows.append(Arrow(actor_list, [x_pos, self.center_y + 10], self.direction, self.damage_arrow))
     
     def update(self):
-        if (self.left <= LEFT_LIMIT and self.walking == "L"
-                or self.right >= RIGHT_LIMIT and self.walking == "R"):
+        if (self.left <= LEFT_LIMIT and self.direction == "L"
+                or self.right >= RIGHT_LIMIT and self.direction == "R"):
             self.change_x = 0
         if self.hit_cooldown == 0:    
             for enemy in self.enemies:
