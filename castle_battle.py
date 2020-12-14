@@ -6,9 +6,10 @@ import time
 
 SPRITE_SCALING = 0.5
 
-SCREEN_WIDTH = 1000
-SCREEN_HEIGHT = 800
+SCREEN_WIDTH = 1750
+SCREEN_HEIGHT = 1000
 SCREEN_TITLE = "CTR Battle Arena"
+MUSIC_VOLUME = 0.01
 SPRITE_PIXEL_SIZE = 128
 GRID_PIXEL_SIZE = (SPRITE_PIXEL_SIZE * SPRITE_SCALING)
 LEFT_LIMIT = 0
@@ -32,6 +33,11 @@ class GameView(arcade.View):
 
     def __init__(self):
         super().__init__()
+        #music
+        self.music_list =[]
+        self.current_song = 0
+        self.music = None
+
         # Sprite lists
         self.wall_list = arcade.SpriteList()
         self.border_list = arcade.SpriteList()
@@ -48,6 +54,8 @@ class GameView(arcade.View):
         self.count_2 = 0
         self.count_3 = 0
         self.count_4 = 0
+
+        
 
         # List of physics engines, one per actor; allows for multiple actors
         self.physics_engine = {}
@@ -84,6 +92,21 @@ class GameView(arcade.View):
         self.wall_list.extend(self.floor_list) 
         self.wall_list.extend(self.platform_list)
 
+         # List of music
+        self.music_list = ["sounds/background_music.mp3"]
+        # Array index of what to play
+        self.current_song = 0
+        # Play the song
+        self.play_song()
+
+    def play_song(self):
+        """ Play the song. """
+        # Stop what is currently playing.
+        if self.music:
+            self.music.stop()
+
+        self.music = arcade.Sound(self.music_list[self.current_song], streaming=True)
+        self.music.play(MUSIC_VOLUME)
 
     def on_update(self, delta_time):
         # Call update on all sprites
@@ -124,6 +147,12 @@ class GameView(arcade.View):
                     Cyclops(self.player_sprite, self.actor_list, self.enemy_list, self.floor_list)
                 else:
                     Dragon(self.player_sprite, self.actor_list, self.enemy_list, self.border_list) 
+
+        position = self.music.get_stream_position()
+
+        if position == 0.0:
+            self.play_song()
+
 #50, 130, 180
     def on_key_press(self, key, modifiers):
         self.player_sprite.on_key_press(key)
@@ -201,7 +230,14 @@ class GameView(arcade.View):
                          arcade.color.BLACK,
                          font_size=20,
                          anchor_x="center")
-    
+
+        position = self.music.get_stream_position()
+        length = self.music.get_length()
+        
+        size = 20
+        margin = size * .5
+
+        
 class InstructionView(arcade.View):
     """ View to show instructions """
 
