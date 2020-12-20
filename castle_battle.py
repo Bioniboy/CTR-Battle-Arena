@@ -37,6 +37,7 @@ class GameView(arcade.View):
         self.music_list =[]
         self.current_song = 0
         self.music = None
+        
 
         # Sprite lists
         self.wall_list = arcade.SpriteList()
@@ -65,9 +66,9 @@ class GameView(arcade.View):
         self.enemy_count = 1.0
         self.game_over = False
         self.start_time = self.time_lapsed = time.time()
+        self.boss_time = False
+        self.fighting_boss = False
         
-
-        #self.coins = 0
 
     def setup(self):    
         for i in list(range(4)) + list(range(8, 30)):
@@ -135,18 +136,28 @@ class GameView(arcade.View):
         else:
             self.enemy_cooldown = 500
             self.enemy_count += 0.1
-            for _ in range(int(self.enemy_count)):
-                enemy_choice = random.randint(1, 200)
-                if enemy_choice < 50:
-                    Orc(self.player_sprite, self.actor_list, self.enemy_list, self.wall_list)
-                elif enemy_choice < 130:
-                    Goblin(self.player_sprite, self.actor_list, self.enemy_list, self.wall_list)
-                elif enemy_choice < 180:
-                    Skeleton(self.player_sprite, self.actor_list, self.enemy_list, self.wall_list)
-                elif enemy_choice < 190:
-                    Cyclops(self.player_sprite, self.actor_list, self.enemy_list, self.floor_list)
-                else:
-                    Dragon(self.player_sprite, self.actor_list, self.enemy_list, self.border_list) 
+            if self.boss_time == False:
+                for _ in range(int(self.enemy_count)):
+                    enemy_choice = random.randint(1, 200)
+                    if enemy_choice < 50:
+                        Orc(self.player_sprite, self.actor_list, self.enemy_list, self.wall_list)
+                    elif enemy_choice < 130:
+                        Goblin(self.player_sprite, self.actor_list, self.enemy_list, self.wall_list)
+                    elif enemy_choice < 180:
+                       Skeleton(self.player_sprite, self.actor_list, self.enemy_list, self.wall_list)
+                    elif enemy_choice < 190:
+                        Cyclops(self.player_sprite, self.actor_list, self.enemy_list, self.floor_list)
+                    else:
+                        Dragon(self.player_sprite, self.actor_list, self.enemy_list, self.border_list)
+                
+
+        if self.boss_time == True and self.fighting_boss == False:
+            Wizard(self.player_sprite, self.actor_list, self.enemy_list, self.wall_list)
+            self.fighting_boss = True
+
+        if self.fighting_boss == True and Wizard.is_alive == False:
+            self.boss_time = False
+            self.fighting_boss = False
 
         position = self.music.get_stream_position()
 
@@ -197,7 +208,7 @@ class GameView(arcade.View):
             tomb_y = int(self.player_sprite.center_y)
             arcade.draw_lrwh_rectangle_textured(tomb_x - 20, tomb_y - 30, 75, 100, self.tomb)
            
-
+        
 
         # Put the text on the screen.
         health = int(self.player_sprite.health)
@@ -290,6 +301,7 @@ class UpgradeView(arcade.View):
     def __init__(self, game_view):
         super().__init__()
         self.game_view = game_view
+        self.boss_time = game_view.boss_time
 
     def on_show(self):
         arcade.set_background_color(arcade.color.SKY_BLUE)
@@ -331,6 +343,12 @@ class UpgradeView(arcade.View):
                          arcade.color.WHITE,
                          font_size=20,
                          anchor_x="center")
+        arcade.draw_text("4: Battle the Boss",
+                         SCREEN_WIDTH / 2,
+                         SCREEN_HEIGHT / 2-150,
+                         arcade.color.WHITE,
+                         font_size=20,
+                         anchor_x="center")
         health = int(self.game_view.player_sprite.health)
         output = f"Health: {health}"
         arcade.draw_text(output, 10, 970,
@@ -348,7 +366,7 @@ class UpgradeView(arcade.View):
             self.window.show_view(game)
         elif key == arcade.key.KEY_1 and self.game_view.player_sprite.coins >= 20:
             self.game_view.player_sprite.health += 25
-            self.game_view.player_sprite.coins -= 25
+            self.game_view.player_sprite.coins -= 20
         elif key == arcade.key.KEY_2 and self.game_view.player_sprite.coins >= 30:
             self.game_view.count_2 += 1
             self.game_view.player_sprite.damage *= (1 + 1/(2*self.game_view.count_2))
@@ -357,6 +375,8 @@ class UpgradeView(arcade.View):
             self.game_view.count_3 += 1
             self.game_view.player_sprite.damage_arrow *= (1 + 1/(2*self.game_view.count_3))
             self.game_view.player_sprite.coins -= 30
+        elif key == arcade.key.KEY_4:
+            self.game_view.boss_time = True
         
 
 class Actor(arcade.Sprite):
@@ -438,6 +458,7 @@ class Player(Actor):
             self.walking = True
             self.direction = "R"
             self.texture = self.textures["idle"][self.direction]
+
 
     def on_key_release(self, key):
         if (key in [arcade.key.LEFT, arcade.key.A] and self.direction == "L"
@@ -534,6 +555,31 @@ class Arrow(arcade.Sprite):
         else:
             self.change_x = 5
             self.texture = arcade.load_texture("images/arrow.png",
+                                        flipped_horizontally=True)
+        self.damage = damage
+        self.scale = 0.1
+        self.position = pos
+        self.knockback = 2
+    
+    def is_alive(self):
+        return self.health > 0
+    
+    def update(self):
+        pass
+
+class Blast(arcade.Sprite):
+    def __init__(self, actor_list, pos, direction, damage):
+        super().__init__()
+        actor_list.append(self)
+        self.physics_engine = arcade.PhysicsEnginePlatformer(self, arcade.SpriteList(), gravity_constant=0)
+        self.health = 1
+        self.show_health = False
+        if direction == "L":
+            self.texture = arcade.load_texture("images/wizard_blast.png")
+            self.change_x = -5
+        else:
+            self.change_x = 5
+            self.texture = arcade.load_texture("images/wizard_blast.png",
                                         flipped_horizontally=True)
         self.damage = damage
         self.scale = 0.1
@@ -784,6 +830,76 @@ class Cyclops(Enemy):
             self.upgrade_cooldown = 1000
             self.health *= 1.1
             self.damage *= 1.1
+
+class Wizard(Enemy):
+    def __init__(self, player, actor_list, enemy_list, wall_list):
+        super().__init__(player, actor_list, enemy_list, wall_list)
+        self.add_texture("images/wizard.png", "idle")
+        self.texture = self.textures["idle"]["R"]
+        self.direction = "R"
+        self.scale = SPRITE_SCALING/3
+        self.actor_list = actor_list
+        self.position = random.choice(DOORS)
+        self.health = 1000
+        self.speed = 2
+        self.accel = 0.3
+        self.jump_height = 10
+        self.damage = 10
+        self.damage_arrow = 50
+        self.knockback = 10
+        self.value = 1000
+        self.prey = player
+        self.upgrade_cooldown = 1000
+        self.shoot_cooldown = 100
+        self.arrows = []
+        self.walking = True
+        
+    def update(self):
+        if self.center_x < self.prey.center_x and self.change_x < self.speed:
+            if self.walking:
+                self.change_x += self.accel
+            self.texture = self.textures["idle"]["R"]
+            self.direction = "R"
+        elif self.center_x > self.prey.center_x and self.change_x > -self.speed:
+            if self.walking:
+                self.change_x -= self.accel
+            self.texture = self.textures["idle"]["L"]
+            self.direction = "L"
+        self.walking = abs(self.center_x - self.prey.center_x) > 400 or abs(self.center_y - self.prey.center_y) > 100
+
+        if (self.bottom + 10 < self.prey.bottom and self.physics_engine.can_jump()
+                and abs(self.center_x - self.prey.center_x) < 150):
+            self.change_y = self.jump_height
+        
+        if self.physics_engine.can_jump and abs(self.change_x) > self.speed or not self.walking:
+            self.change_x /= FRICTION
+
+        if self.upgrade_cooldown > 0:
+            self.upgrade_cooldown -= 1
+        else:
+            self.upgrade_cooldown = 1000
+            self.health *= 1.1
+            self.damage_arrow *= 1.1
+
+        if self.shoot_cooldown > 0:
+            self.shoot_cooldown -= 1
+        else:
+            self.shoot_cooldown = 50
+            self.fire_bow(self.actor_list)
+        
+        for arrow in self.arrows:
+            if arrow.collides_with_sprite(self.prey):
+                self.prey.take_damage(arrow)
+                arrow.health -= 1
+        
+
+        
+    def fire_bow(self, actor_list):
+        if self.direction == "L":
+            x_pos = self.left - 20
+        else:
+            x_pos = self.right + 20
+        self.arrows.append(Blast(actor_list, [x_pos, self.center_y + 10], self.direction, self.damage_arrow))
 
 def main():
     """ Main method """
