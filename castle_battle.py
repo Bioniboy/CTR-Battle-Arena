@@ -3,6 +3,7 @@ import images
 import math
 import random
 import time
+import os
 
 SPRITE_SCALING = 0.5
 
