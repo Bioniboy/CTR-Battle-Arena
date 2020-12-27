@@ -904,7 +904,7 @@ class Wizard(Enemy):
 
 def main():
     """ Main method """
-    window = arcade.Window(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
+    window = arcade.Window(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE, fullscreen=True)
     start_view = InstructionView()
     window.show_view(start_view)
     arcade.run()
